@@ -1,0 +1,196 @@
+{
+  "senior": [
+    {
+      "key": "openness_to_experience",
+      "questions": [
+        {
+          "text": "I enjoy spending time with someone who introduces me to new ideas or activities.",
+          "reverse": false
+        },
+        {
+          "text": "I prefer a volunteer who enjoys routines and keeps things predictable.",
+          "reverse": true
+        }
+      ]
+    },
+    {
+      "key": "conscientiousness",
+      "questions": [
+        {
+          "text": "I prefer a volunteer who is more spontaneous than structured.",
+          "reverse": true
+        },
+        {
+          "text": "I prefer spending time with someone who is easygoing and flexible rather than structured.",
+          "reverse": true
+        }
+      ]
+    },
+    {
+      "key": "extraversion",
+      "questions": [
+        {
+          "text": "I enjoy having conversations with someone who is lively and talkative.",
+          "reverse": false
+        },
+        {
+          "text": "I would feel most comfortable with a volunteer who is calm rather than energetic.",
+          "reverse": true
+        }
+      ]
+    },
+    {
+      "key": "agreeableness",
+      "questions": [
+        {
+          "text": "I like when a volunteer checks in on me regularly rather than waiting for me to reach out.",
+          "reverse": false
+        },
+        {
+          "text": "I feel comfortable with someone who lets me take the lead in conversations and activities rather than guiding me.",
+          "reverse": true
+        }
+      ]
+    },
+    {
+      "key": "neuroticism",
+      "questions": [
+        {
+          "text": "I would like a volunteer who can help me stay relaxed and positive in challenging moments.",
+          "reverse": false
+        },
+        {
+          "text": "I feel more connected to people who openly express their thoughts and emotions rather than keeping them private.",
+          "reverse": false
+        }
+      ]
+    }
+  ],
+  "volunteer": [
+    {
+      "key": "openness_to_experience",
+      "questions": [
+        {
+          "text": "I enjoy discovering new hobbies or exploring unfamiliar activities.",
+          "reverse": false
+        },
+        {
+          "text": "I like hearing different perspectives and learning from people with unique experiences.",
+          "reverse": false
+        },
+        {
+          "text": "I prefer familiar routines over spontaneous changes.",
+          "reverse": true
+        },
+        {
+          "text": "I find creative expression—such as music, writing, or art—exciting and fulfilling.",
+          "reverse": false
+        },
+        {
+          "text": "I enjoy conversations that explore new ideas and ways of thinking.",
+          "reverse": false
+        }
+      ]
+    },
+    {
+      "key": "conscientiousness",
+      "questions": [
+        {
+          "text": "I like to plan ahead and keep things organized.",
+          "reverse": false
+        },
+        {
+          "text": "When I start a task, I do my best to see it through to the end.",
+          "reverse": false
+        },
+        {
+          "text": "I sometimes find it easier to go with the flow than to stick to a schedule.",
+          "reverse": true
+        },
+        {
+          "text": "Being reliable and following through on commitments is important to me.",
+          "reverse": false
+        },
+        {
+          "text": "I feel most productive when I have a clear plan or routine to follow.",
+          "reverse": false
+        }
+      ]
+    },
+    {
+      "key": "extraversion",
+      "questions": [
+        {
+          "text": "I enjoy spending time around people and engaging in conversation.",
+          "reverse": false
+        },
+        {
+          "text": "I feel energized when I’m part of a lively discussion or group activity.",
+          "reverse": false
+        },
+        {
+          "text": "I find quiet time alone more refreshing than social time with others.",
+          "reverse": true
+        },
+        {
+          "text": "In group settings, I am comfortable taking initiative when needed.",
+          "reverse": false
+        },
+        {
+          "text": "I feel comfortable walking up to someone and starting a conversation.",
+          "reverse": false
+        }
+      ]
+    },
+    {
+      "key": "agreeableness",
+      "questions": [
+        {
+          "text": "I find it fulfilling to support and encourage others.",
+          "reverse": false
+        },
+        {
+          "text": "I try to consider different viewpoints before forming an opinion.",
+          "reverse": false
+        },
+        {
+          "text": "I find it difficult to trust people easily.",
+          "reverse": true
+        },
+        {
+          "text": "I try to create a positive and harmonious atmosphere when interacting with others.",
+          "reverse": false
+        },
+        {
+          "text": "When someone is going through a tough time, I naturally want to be there for them.",
+          "reverse": false
+        }
+      ]
+    },
+    {
+      "key": "neuroticism",
+      "questions": [
+        {
+          "text": "I often think about things that happened during the day, even after they’re over.",
+          "reverse": false
+        },
+        {
+          "text": "I can usually stay calm and focused, even in stressful situations.",
+          "reverse": true
+        },
+        {
+          "text": "When facing uncertainty, I sometimes find myself thinking through all possible outcomes.",
+          "reverse": false
+        },
+        {
+          "text": "I find that after a setback, I’m able to shift my focus and move forward.",
+          "reverse": true
+        },
+        {
+          "text": "I notice when my mood changes and try to understand why.",
+          "reverse": false
+        }
+      ]
+    }
+  ]
+}
