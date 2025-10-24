@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/router'
-import LoadingOverlay from '../components/LoadingOverlay' // adjust path if needed
+import LoadingOverlay from '../components/LoadingOverlay'
 
 export default function Register() {
   const supabase = useSupabaseClient()
@@ -9,29 +9,30 @@ export default function Register() {
   const router = useRouter()
 
   const [form, setForm] = useState({
-    first_name: '',
-    preferred_name: '',
-    last_name: '',
+    full_name: '',
     phone_number: '',
-    user_role: 'volunteer',
-    gender: '',
-    birthday: '',
-    primary_language: '',
-    secondary_language: '',
     senior_home: '',
-    email: ''
   })
 
+  const [seniorHomes, setSeniorHomes] = useState([])
   const [loading, setLoading] = useState(false)
 
+  // Fetch list of senior homes for dropdown
+  useEffect(() => {
+    const fetchSeniorHomes = async () => {
+      const { data, error } = await supabase.from('senior_homes').select('*')
+      if (error) console.error('Error loading senior homes:', error)
+      else setSeniorHomes(data)
+    }
+    fetchSeniorHomes()
+  }, [supabase])
+
+  // Pre-fill email or name from Supabase user metadata
   useEffect(() => {
     if (user) {
       setForm(prev => ({
         ...prev,
-        email: user.email || '',
-        first_name: user.user_metadata.first_name || '',
-        last_name: user.user_metadata.last_name || '',
-        preferred_name: user.user_metadata.full_name || user.email || ''
+        full_name: user.user_metadata.full_name || '',
       }))
     }
   }, [user])
@@ -44,104 +45,61 @@ export default function Register() {
   const complete = async (e) => {
     e.preventDefault()
 
-    for (const [key, value] of Object.entries(form)) {
-      if (!value && key !== 'secondary_language') {
-        alert(`Please fill out ${key.replace('_', ' ')}`)
-        return
-      }
-    }
-
-    const secondaryList = form.secondary_language
-      ? form.secondary_language.split(',').map(s => s.trim())
-      : []
-
-    if (secondaryList.includes(form.primary_language)) {
-      alert('Primary language cannot also be selected as a secondary language.')
+    if (!form.full_name || !form.phone_number || !form.senior_home) {
+      alert('Please fill out all required fields.')
       return
-    }
-
-    const payload = {
-      profileData: {
-        first_name: form.first_name,
-        preferred_name: form.preferred_name,
-        last_name: form.last_name,
-        phone_number: form.phone_number,
-        user_role: form.user_role,
-        gender: form.gender,
-        birthday: form.birthday,
-        primary_language: form.primary_language,
-        secondary_language: secondaryList,
-        senior_home: form.senior_home.split(' - ')[0],
-        email: form.email
-      }
     }
 
     try {
       setLoading(true)
-      const result = await supabase.functions.invoke('register_user', { body: payload })
-      if (result.error) {
-        console.error('register_user returned error:', result.error)
-        alert('Could not complete registration.')
-        return
-      }
+
+      // 1️⃣ Create or update volunteer_profiles
+      const { error: profileError } = await supabase
+        .from('volunteer_profiles')
+        .upsert({
+          user_id: user.id,
+          full_name: form.full_name,
+          senior_home: form.senior_home,
+        })
+
+      if (profileError) throw profileError
+
+      // 2️⃣ Create or update private_volunteer_profiles
+      const { error: privateError } = await supabase
+        .from('private_volunteer_profiles')
+        .upsert({
+          user_id: user.id,
+          phone_number: form.phone_number,
+          status: 'active', // default status
+        })
+
+      if (privateError) throw privateError
+
       router.push('/profile')
     } catch (err) {
-      console.error('Invocation threw:', err)
-      alert('Unexpected error—check console')
+      console.error('Error completing registration:', err)
+      alert('Could not complete registration. Please try again.')
     } finally {
       setLoading(false)
     }
   }
 
   if (!user) return <LoadingOverlay message="Loading user..." />
-  if (loading) return <LoadingOverlay message="Completing registration..." />
+  if (loading) return <LoadingOverlay message="Saving your profile..." />
 
   return (
     <div className="form-container">
-      <h1>One more step…</h1>
+      <h1>Complete Your Volunteer Profile</h1>
       <form onSubmit={complete}>
-        {/* First Name */}
+        {/* Full Name */}
         <div className="form-group">
-          <label htmlFor="first_name">First Name</label>
+          <label htmlFor="full_name">Full Name</label>
           <input
-            id="first_name"
-            name="first_name"
-            value={form.first_name}
+            id="full_name"
+            name="full_name"
+            value={form.full_name}
             onChange={handleChange}
-          />
-        </div>
-
-        {/* Preferred Name */}
-        <div className="form-group">
-          <label htmlFor="preferred_name">Preferred Name</label>
-          <input
-            id="preferred_name"
-            name="preferred_name"
-            value={form.preferred_name}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Last Name */}
-        <div className="form-group">
-          <label htmlFor="last_name">Last Name</label>
-          <input
-            id="last_name"
-            name="last_name"
-            value={form.last_name}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Email */}
-        <div className="form-group">
-          <label htmlFor="email">Email</label>
-          <input
-            type="email"
-            id="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
+            required
           />
         </div>
 
@@ -152,113 +110,12 @@ export default function Register() {
             id="phone_number"
             name="phone_number"
             type="tel"
-            inputMode="numeric"
             pattern="[0-9]*"
             maxLength={15}
             value={form.phone_number}
             onChange={handleChange}
-            onKeyPress={(e) => {
-              if (!/[0-9]/.test(e.key)) {
-                e.preventDefault()
-              }
-            }}
-          />
-        </div>
-
-        {/* User Role */}
-        <div className="form-group">
-          <label htmlFor="user_role">User Role</label>
-          <select
-            id="user_role"
-            name="user_role"
-            value={form.user_role}
-            onChange={handleChange}
-          >
-            <option value="volunteer">Volunteer</option>
-            <option value="senior">Senior</option>
-          </select>
-        </div>
-
-        {/* Gender */}
-        <div className="form-group">
-          <label htmlFor="gender">Gender</label>
-          <select
-            id="gender"
-            name="gender"
-            value={form.gender}
-            onChange={handleChange}
-          >
-            <option value="">Select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-
-        {/* Birthday */}
-        <div className="form-group">
-          <label htmlFor="birthday">Birthday</label>
-          <input
-            type="date"
-            id="birthday"
-            name="birthday"
-            value={form.birthday}
-            onChange={handleChange}
-          />
-        </div>
-
-        {/* Primary Language */}
-        <div className="form-group">
-          <label htmlFor="primary_language">Primary Language</label>
-          <select
-            id="primary_language"
-            name="primary_language"
-            value={form.primary_language}
-            onChange={handleChange}
             required
-          >
-            <option value="">Select a primary language</option>
-            {['English', 'Mandarin', 'Cantonese', 'Punjabi', 'Tagalog', 'Korean', 'Vietnamese', 'Hindi', 'Japanese', 'Spanish', 'Farsi', 'French'].map(lang => (
-              <option key={lang} value={lang}>{lang}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Secondary Languages */}
-        <div className="form-group">
-          <label htmlFor="secondary_language">Secondary Languages (Ctrl/Cmd + Click)</label>
-          <select
-            multiple
-            style={{ height: '150px' }}
-            id="secondary_language"
-            name="secondary_language"
-            value={form.secondary_language.split(',')}
-            onChange={(e) => {
-              const selected = Array.from(e.target.selectedOptions, opt => opt.value)
-              setForm(prev => ({ ...prev, secondary_language: selected.join(',') }))
-            }}
-          >
-            {[
-              'English',
-              'Mandarin',
-              'Cantonese',
-              'Punjabi',
-              'Tagalog',
-              'Korean',
-              'Vietnamese',
-              'Hindi',
-              'Japanese',
-              'Spanish',
-              'Farsi',
-              'French',
-              'Arabic',
-              'Russian',
-              'Portuguese',
-              'German'
-            ].map(lang => (
-              <option key={lang} value={lang}>{lang}</option>
-            ))}
-          </select>
+          />
         </div>
 
         {/* Senior Home */}
@@ -269,24 +126,18 @@ export default function Register() {
             name="senior_home"
             value={form.senior_home}
             onChange={handleChange}
+            required
           >
             <option value="">Select a senior home</option>
-            {[
-              'Arbutus Care Center - 4505 Valley Dr, Vancouver, BC',
-              'Casa Mia - 1920 SW Marine Dr, Vancouver, BC',
-              'Opal by Element - 438 W King Edward Ave, Vancouver, BC',
-              'Pinegrove Place - 11331 Mellis Dr, Richmond, BC',
-              'Point Grey Private Hospital - 2423 Cornwall Ave, Vancouver, BC',
-              'South Granville Lodge - 1550 W 62nd Ave, Vancouver, BC',
-              'Tapestry - 3338 Wesbrook Mall, Vancouver, BC',
-              'Terrace on 7th - 1570 W 7th Ave, Vancouver, BC'
-            ].map(home => (
-              <option key={home} value={home}>{home}</option>
+            {seniorHomes.map(home => (
+              <option key={home.id} value={home.name}>
+                {home.name}
+              </option>
             ))}
           </select>
         </div>
 
-        <button type="submit" className="submit-btn">Complete Registration</button>
+        <button type="submit" className="submit-btn">Save Profile</button>
       </form>
 
       <style jsx>{`
@@ -311,7 +162,7 @@ export default function Register() {
         label {
           margin-bottom: 0.5rem;
           font-weight: bold;
-          color: #000000ff;
+          color: #000;
         }
         input,
         select {
@@ -330,7 +181,6 @@ export default function Register() {
           border: none;
           border-radius: 5px;
           cursor: pointer;
-          transition: background 0.2s ease;
         }
         .submit-btn:hover {
           background-color: #6f1317;

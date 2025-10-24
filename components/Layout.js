@@ -12,7 +12,7 @@ export default function Layout({ children }) {
 
   const isLoginPage = router.pathname === '/'
 
-  // Load the user's profile to get their role
+  // Load the volunteer's profile
   const [profile, setProfile] = useState(null)
   const [loadingProfile, setLoadingProfile] = useState(true)
 
@@ -22,19 +22,18 @@ export default function Layout({ children }) {
       return
     }
 
+    // ✅ Query the new table
     supabase
-      .from('personal_profiles_view')
-      .select('user_role')
-      .eq('email', user.email)
+      .from('private_volunteer_profiles')
+      .select('*')
+      .eq('user_id', user.id)
       .single()
       .then(({ data, error }) => {
-        if (error) console.error('Error fetching profile:', error)
+        if (error) console.error('Error fetching volunteer profile:', error)
         else setProfile(data)
       })
       .finally(() => setLoadingProfile(false))
   }, [user, supabase])
-
-  const isVolunteer = profile?.user_role === 'volunteer'
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -73,14 +72,13 @@ export default function Layout({ children }) {
                 Profile
               </Link>
 
-              {!loadingProfile && isVolunteer && (
-                <Link
-                  href="/volunteer/timesheet"
-                  style={{ marginRight: '1rem', color: 'white' }}
-                >
-                  Timesheet
-                </Link>
-              )}
+              {/* ✅ Always show Timesheet for volunteers */}
+              <Link
+                href="/volunteer/timesheet"
+                style={{ marginRight: '1rem', color: 'white' }}
+              >
+                Timesheet
+              </Link>
             </nav>
           )}
 
@@ -106,7 +104,7 @@ export default function Layout({ children }) {
       </header>
 
       <main style={{ padding: '2rem' }}>{children}</main>
-      {/* Footer with contact info */}
+
       <footer
         style={{
           marginTop: '2rem',
@@ -127,7 +125,7 @@ export default function Layout({ children }) {
             it.medicfoundation@gmail.com
           </a>
         </p>
-      </footer>      
+      </footer>
     </>
   )
 }

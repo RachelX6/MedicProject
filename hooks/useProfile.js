@@ -3,7 +3,7 @@ import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
 
 export default function useProfile() {
-  const user     = useUser()
+  const user = useUser()
   const supabase = useSupabaseClient()
 
   const [profile, setProfile] = useState(null)
@@ -12,30 +12,43 @@ export default function useProfile() {
   useEffect(() => {
     if (!user) return
 
-    supabase
-      .from('personal_profiles_view')
-      .select(`
-        id,
-        email,
-        user_role,
-        user_status,
-        first_name,
-        last_name,
-        preferred_name,
-        phone_number,
-        gender,
-        birthday,
-        primary_language,
-        secondary_language,
-        senior_home
-      `)
-      .eq('email', user.email)
-      .single()
-      .then(({ data, error }) => {
-        if (error) console.error('Error loading profile', error)
-        else       setProfile(data)
+    const loadProfile = async () => {
+      setLoading(true)
+
+      // Fetch from volunteer_profiles
+      const { data: volunteer, error: vError } = await supabase
+        .from('volunteer_profiles')
+        .select('user_id, name, senior_home')
+        .eq('user_id', user.id)
+        .single()
+
+      if (vError) {
+        console.error('Error loading volunteer profile:', vError)
+        setLoading(false)
+        return
+      }
+
+      // Fetch private info (status, phone_number)
+      const { data: privateData, error: pError } = await supabase
+        .from('private_volunteer_profiles')
+        .select('status, phone_number')
+        .eq('user_id', user.id)
+        .single()
+
+      if (pError) {
+        console.warn('No private volunteer info found (optional):', pError)
+      }
+
+      setProfile({
+        ...volunteer,
+        ...privateData,
+        email: user.email
       })
-      .finally(() => setLoading(false))
+
+      setLoading(false)
+    }
+
+    loadProfile()
   }, [user, supabase])
 
   return { profile, loading }

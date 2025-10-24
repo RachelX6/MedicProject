@@ -1,110 +1,70 @@
-import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+// pages/volunteer/ConversationIdeas.jsx
+import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/router'
 
 export default function ConversationIdeas() {
-  const user = useUser();
-  const supabase = useSupabaseClient();
-  const router = useRouter();
+  const user = useUser()
+  const supabase = useSupabaseClient()
+  const router = useRouter()
 
-  const [matched, setMatched] = useState(null);
-  const [ideas, setIdeas] = useState([]);
-  const [loadingProfile, setLoadingProfile] = useState(true);
-  const [loadingIdeas, setLoadingIdeas] = useState(false);
+  const [ideas, setIdeas] = useState([])
+  const [loadingIdeas, setLoadingIdeas] = useState(false)
 
-  // Helper: fetch new ideas from Gemini
+  // ✅ Fetch ideas from Gemini Edge Function
   const fetchIdeas = async () => {
-    setLoadingIdeas(true);
+    setLoadingIdeas(true)
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const token = session?.access_token;
+      const { data: { session } } = await supabase.auth.getSession()
+      const token = session?.access_token
 
       const res = await fetch(`${supabase.supabaseUrl}/functions/v1/find_common_activities`, {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
-      });
+      })
 
       if (!res.ok) {
-        console.error('Edge function error:', await res.json());
-        return;
+        console.error('Edge function error:', await res.json())
+        return
       }
 
-      const json = await res.json();
-      setIdeas(json || []);
-
-      // Save to cache
-      localStorage.setItem("conversationIdeas", JSON.stringify(json));
+      const json = await res.json()
+      setIdeas(json || [])
+      localStorage.setItem("conversationIdeas", JSON.stringify(json))
     } catch (err) {
-      console.error('Error fetching ideas:', err);
+      console.error('Error fetching ideas:', err)
     } finally {
-      setLoadingIdeas(false);
+      setLoadingIdeas(false)
     }
-  };
+  }
 
-  // 1️⃣ Check if user is matched
+  // ✅ Load volunteer info (optional, for future use)
   useEffect(() => {
-    if (!user) return;
-    setLoadingProfile(true);
+    if (!user) return
     supabase
-      .from('profile')
-      .select('matched_with_id')
-      .eq('id', user.id)
+      .from('private_volunteer_profiles')
+      .select('user_id')
+      .eq('user_id', user.id)
       .single()
-      .then(({ data, error }) => {
-        if (error) {
-          console.error('Error loading profile:', error);
-        } else {
-          setMatched(data?.matched_with_id !== null);
-        }
+      .then(({ error }) => {
+        if (error) console.error('Error loading volunteer profile:', error)
       })
-      .finally(() => setLoadingProfile(false));
-  }, [user, supabase]);
+  }, [user, supabase])
 
-  // 2️⃣ If matched, load ideas (check cache first)
+  // ✅ Load cached or fresh ideas
   useEffect(() => {
-    if (!matched) return;
-
-    const cached = localStorage.getItem("conversationIdeas");
+    const cached = localStorage.getItem("conversationIdeas")
     if (cached) {
-      setIdeas(JSON.parse(cached));
-      return;
+      setIdeas(JSON.parse(cached))
+      return
     }
+    fetchIdeas()
+  }, [])
 
-    fetchIdeas(); // fetch new if no cache
-  }, [matched]);
-
-  // 3️⃣ Access guard
-  if (!user || loadingProfile) {
-    return <p>Loading…</p>;
+  if (!user) {
+    return <p>Loading your account...</p>
   }
 
-  if (!matched) {
-    return (
-      <div style={{ textAlign: 'center', marginTop: '3rem' }}>
-        <p style={{ color: 'crimson', fontSize: '1.2rem', fontWeight: 'bold' }}>
-          🚫 Access Denied
-        </p>
-        <p>This page is only available to matched volunteers.</p>
-        <button
-          onClick={() => router.push('/profile')}
-          style={{
-            marginTop: '1rem',
-            backgroundColor: '#8d171b',
-            color: '#fff',
-            padding: '0.75rem 1.5rem',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontWeight: 'bold',
-          }}
-        >
-          ← Back to Profile
-        </button>
-      </div>
-    );
-  }
-
-  // 4️⃣ Volunteer view
   if (loadingIdeas) {
     return (
       <div
@@ -120,13 +80,10 @@ export default function ConversationIdeas() {
       >
         <div className="loader" style={{ margin: '0 auto 1rem auto' }} />
         <p style={{ fontSize: '1.1rem', color: '#333' }}>
-          Finding conversation ideas that match your interests and personality…
-        </p>
-        <p style={{ fontSize: '0.95rem', color: '#666', marginTop: '0.5rem' }}>
-          This may take a few seconds — thank you for your patience!
+          Finding conversation ideas that match your interests…
         </p>
       </div>
-    );
+    )
   }
 
   return (
@@ -145,7 +102,7 @@ export default function ConversationIdeas() {
       </h1>
 
       {ideas.length === 0 ? (
-        <p>No conversation ideas returned.</p>
+        <p>No conversation ideas returned yet.</p>
       ) : (
         ideas.map((idea, index) => (
           <div
@@ -183,11 +140,10 @@ export default function ConversationIdeas() {
       )}
 
       <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-        {/* Refresh button to get new ideas */}
         <button
           onClick={() => {
-            localStorage.removeItem("conversationIdeas"); // clear cache
-            fetchIdeas(); // fetch fresh without reload
+            localStorage.removeItem("conversationIdeas")
+            fetchIdeas()
           }}
           style={{
             marginRight: '1rem',
@@ -219,5 +175,5 @@ export default function ConversationIdeas() {
         </button>
       </div>
     </div>
-  );
+  )
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
-import useProfile from '../../hooks/useProfile'
+import useProfile from '../hooks/useProfile'
 
 export default function SettingsPage() {
     const supabase = useSupabaseClient()
@@ -12,7 +12,7 @@ export default function SettingsPage() {
     const [saving, setSaving] = useState(false)
     const [statusMsg, setStatusMsg] = useState('')
 
-    // ✅ All senior homes
+    // All senior homes (for email notifications)
     const allSeniorHomes = [
         'Tapestry',
         'Terrace on 7th',
@@ -33,12 +33,10 @@ export default function SettingsPage() {
             .eq('id', profile.id)
             .single()
             .then(({ data }) => {
-                if (data?.email_preferences) {
-                    setEmailPreferences(data.email_preferences)
-                }
+                if (data?.email_preferences) setEmailPreferences(data.email_preferences)
                 setLoading(false)
             })
-    }, [profile])
+    }, [profile, supabase])
 
     const togglePreference = (value) => {
         setEmailPreferences((prev) =>
@@ -55,9 +53,7 @@ export default function SettingsPage() {
 
         try {
             const { data, error } = await supabase.functions.invoke('update_email_preferences', {
-                body: {
-                    email_preferences: emailPreferences,
-                },
+                body: { email_preferences: emailPreferences },
             })
 
             if (error) {
@@ -84,9 +80,7 @@ export default function SettingsPage() {
             <section style={{ marginTop: '2rem', color: 'black' }}>
                 <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#8d171b' }}>Email Preferences</h3>
                 <p style={{ marginBottom: '1.2rem', lineHeight: '1.6' }}>
-                    Select the senior homes you would like to receive email notifications from — including homes that are not your assigned location.
-                    <br />
-                    If a volunteer becomes unavailable for a session at one of the selected homes, you will be notified by email. You can claim open sessions through the <strong>Change Availability</strong> page.
+                    Select the senior homes you would like to receive email notifications from.
                 </p>
 
                 <ul style={{ listStyle: 'none', paddingLeft: 0, display: 'grid', gap: '0.5rem' }}>
@@ -112,6 +106,7 @@ export default function SettingsPage() {
                         </li>
                     ))}
                 </ul>
+
                 <button
                     onClick={savePreferences}
                     disabled={saving}
@@ -129,11 +124,12 @@ export default function SettingsPage() {
                 </button>
                 {statusMsg && <p style={{ marginTop: '0.5rem' }}>{statusMsg}</p>}
             </section>
-            {/* Back to profile button */}
+
+            {/* Back to dashboard/home */}
             <div style={{ textAlign: 'center', marginTop: '1.5rem' }}>
                 <button
                     type="button"
-                    onClick={() => window.location.href = "/profile"}
+                    onClick={() => window.location.href = "/"}
                     style={{
                         backgroundColor: '#ccc',
                         color: '#333',
@@ -145,11 +141,9 @@ export default function SettingsPage() {
                         cursor: 'pointer',
                     }}
                 >
-                    ← Back to Profile
+                    ← Back
                 </button>
             </div>
         </div>
-        
-        
     )
 }

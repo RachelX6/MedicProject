@@ -1,249 +1,99 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 
 export default function EditProfile() {
   const supabase = useSupabaseClient()
   const user = useUser()
   const router = useRouter()
-
-  const [form, setForm] = useState({
-    first_name: '',
-    preferred_name: '',
-    last_name: '',
-    phone_number: '',
-    user_role: '',
-    gender: '',
-    birthday: '',
-    primary_language: '',
-    secondary_language: '',
-    senior_home: '',
-    email: ''
+  const [profile, setProfile] = useState({
+    full_name: '',
+    phone: '',
+    availability: ''
   })
+  const [loading, setLoading] = useState(true)
+  const [message, setMessage] = useState('')
 
   useEffect(() => {
-    const fetchProfile = async () => {
+    async function loadProfile() {
       if (!user) return
-
       const { data, error } = await supabase
-        .from('profile')
+        .from('private_volunteer_profiles')
         .select('*')
-        .eq('email', user.email)
+        .eq('user_id', user.id)
         .single()
-
       if (error) {
-        console.error('Error loading profile:', error)
-        return
+        console.error(error)
+        setMessage('Error loading profile')
+      } else if (data) {
+        setProfile({
+          full_name: data.full_name || '',
+          phone: data.phone || '',
+          availability: data.availability || ''
+        })
       }
-
-      setForm({
-        ...data,
-        secondary_language: data.secondary_language?.join(', ') || '',
-      })
+      setLoading(false)
     }
-
-    fetchProfile()
+    loadProfile()
   }, [user])
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
-    setForm(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSubmit = async (e) => {
+  async function handleSave(e) {
     e.preventDefault()
-
-    const secondaryList = form.secondary_language
-      ? form.secondary_language.split(',').map(s => s.trim())
-      : []
-
-    const updatedProfile = {
-      ...form,
-      secondary_language: secondaryList,
-    }
+    if (!user) return
 
     const { error } = await supabase
-      .from('profile')
-      .update(updatedProfile)
-      .eq('email', form.email)
+      .from('private_volunteer_profiles')
+      .upsert({ user_id: user.id, ...profile })
 
     if (error) {
-      console.error('Update failed:', error)
-      alert('Failed to update profile.')
+      console.error(error)
+      setMessage('Error updating profile')
     } else {
-      alert('Profile updated successfully!')
+      setMessage('Profile updated successfully')
       router.push('/profile')
     }
   }
 
-  if (!user) return <p>Loading...</p>
+  if (loading) return <p>Loading profile...</p>
 
   return (
-    <div
-      style={{
-        maxWidth: '650px',
-        margin: '3rem auto',
-        backgroundColor: 'white',
-        borderRadius: '12px',
-        padding: '2.5rem',
-        boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
-      }}
-    >
-      <h1 style={{ color: '#8d171b', marginBottom: '2rem', textAlign: 'center' }}>
-        Edit Profile
-      </h1>
-
-      <form onSubmit={handleSubmit}>
-        {[
-          { label: 'First Name', name: 'first_name' },
-          { label: 'Preferred Name', name: 'preferred_name' },
-          { label: 'Last Name', name: 'last_name' },
-          { label: 'Email', name: 'email', type: 'email' },
-          { label: 'Phone Number', name: 'phone_number' },
-          { label: 'Birthday', name: 'birthday', type: 'date' },
-        ].map(({ label, name, type = 'text' }) => (
-          <div key={name} style={{ marginBottom: '1.5rem' , color: 'black'}}>
-            <label htmlFor={name} style={{ fontWeight: 'bold' }}>{label}</label><br />
-            <input
-              type={type}
-              id={name}
-              name={name}
-              value={form[name]}
-              onChange={handleChange}
-              style={{
-                width: '100%',
-                padding: '0.6rem',
-                borderRadius: '6px',
-                border: '1px solid #ccc',
-                marginTop: '0.3rem',
-              }}
-            />
-          </div>
-        ))}
-
-        <div style={{ marginBottom: '1.5rem' , color: 'black'}}>
-          <label htmlFor="gender" style={{ fontWeight: 'bold' }}>Gender</label><br />
-          <select
-            id="gender"
-            name="gender"
-            value={form.gender}
-            onChange={handleChange}
-            style={{
-              width: '100%',
-              padding: '0.6rem',
-              borderRadius: '6px',
-              border: '1px solid #ccc',
-              marginTop: '0.3rem',
-            }}
-          >
-            <option value="">Select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-
-        <div style={{ marginBottom: '1.5rem', color: 'black'}}>
-          <label htmlFor="primary_language" style={{ fontWeight: 'bold' }}>Primary Language</label><br />
-          <select
-            id="primary_language"
-            name="primary_language"
-            value={form.primary_language}
-            onChange={handleChange}
-            style={{
-              width: '100%',
-              padding: '0.6rem',
-              borderRadius: '6px',
-              border: '1px solid #ccc',
-              marginTop: '0.3rem',
-            }}
-          >
-            <option value="">Select primary language</option>
-            {[
-              'English', 'Mandarin', 'Cantonese', 'Punjabi', 'Tagalog',
-              'Korean', 'Vietnamese', 'Hindi', 'Japanese', 'Spanish', 'Farsi', 'French'
-            ].map(lang => (
-              <option key={lang} value={lang}>{lang}</option>
-            ))}
-          </select>
-        </div>
-
-        <div style={{ marginBottom: '1.5rem', color: 'black' }}>
-          <label htmlFor="secondary_language" style={{ fontWeight: 'bold' }}>
-            Secondary Languages (comma-separated)
-          </label><br />
+    <div className="max-w-md mx-auto mt-10 p-6 bg-white shadow-md rounded-lg">
+      <h1 className="text-2xl font-semibold mb-4">Edit Profile</h1>
+      {message && <p className="text-blue-600 mb-4">{message}</p>}
+      <form onSubmit={handleSave} className="space-y-4">
+        <div>
+          <label className="block font-medium mb-1">Full Name</label>
           <input
-            id="secondary_language"
-            name="secondary_language"
-            value={form.secondary_language}
-            onChange={handleChange}
-            style={{
-              width: '100%',
-              padding: '0.6rem',
-              borderRadius: '6px',
-              border: '1px solid #ccc',
-              marginTop: '0.3rem',
-            }}
+            type="text"
+            value={profile.full_name}
+            onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+            className="w-full border p-2 rounded"
+            required
           />
         </div>
-
-        <div style={{ marginBottom: '2rem', color: 'black' }}>
-          <label htmlFor="senior_home" style={{ fontWeight: 'bold' }}>Senior Home</label><br />
-          <select
-            id="senior_home"
-            name="senior_home"
-            value={form.senior_home}
-            onChange={handleChange}
-            style={{
-              width: '100%',
-              padding: '0.6rem',
-              borderRadius: '6px',
-              border: '1px solid #ccc',
-              marginTop: '0.3rem',
-            }}
-          >
-            <option value="">Select a senior home</option>
-            {[
-              'Arbutus Care Center', 'Casa Mia', 'Opal by Element', 'Pinegrove Place',
-              'Point Grey Private Hospital', 'South Granville Lodge', 'Tapestry', 'Terrace on 7th'
-            ].map(home => (
-              <option key={home} value={home}>{home}</option>
-            ))}
-          </select>
+        <div>
+          <label className="block font-medium mb-1">Phone</label>
+          <input
+            type="text"
+            value={profile.phone}
+            onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+            className="w-full border p-2 rounded"
+          />
         </div>
-
-        <div style={{ textAlign: 'center', marginTop: '2rem' }}>
-          <button
-            type="submit"
-            style={{
-              backgroundColor: '#8d171b',
-              color: 'white',
-              padding: '0.75rem 2rem',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              marginRight: '1rem',
-            }}
-          >
-            Save Changes
-          </button>
-          <button
-            type="button"
-            onClick={() => router.push('/profile')}
-            style={{
-              backgroundColor: '#ccc',
-              color: '#333',
-              padding: '0.75rem 2rem',
-              border: 'none',
-              borderRadius: '8px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-            }}
-          >
-            Cancel
-          </button>
+        <div>
+          <label className="block font-medium mb-1">Availability</label>
+          <input
+            type="text"
+            value={profile.availability}
+            onChange={(e) => setProfile({ ...profile, availability: e.target.value })}
+            className="w-full border p-2 rounded"
+          />
         </div>
+        <button type="submit" className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">
+          Save Changes
+        </button>
       </form>
     </div>
   )

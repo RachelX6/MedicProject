@@ -13,7 +13,7 @@ export default function Timesheet() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // 1) Load the user's profile (to get user_role)
+    // Load user's profile
     useEffect(() => {
         if (!user) return;
         (async () => {
@@ -22,19 +22,15 @@ export default function Timesheet() {
                 .select("user_role")
                 .eq("email", user.email)
                 .single();
-            if (error) {
-                console.error("Error fetching profile:", error);
-            } else {
-                setProfile(data);
-            }
+            if (error) console.error("Error fetching profile:", error);
+            else setProfile(data);
         })();
     }, [user, supabase]);
 
-    // 2) Once we know profile and if it's a volunteer, fetch reservations & hours
+    // Fetch reservations & total hours for volunteers
     useEffect(() => {
         if (!user || profile === null) return;
 
-        // If not volunteer, skip fetching
         if (profile.user_role !== "volunteer") {
             setLoading(false);
             return;
@@ -43,57 +39,31 @@ export default function Timesheet() {
         const fetchData = async () => {
             setLoading(true);
             try {
-                // -- Fetch reservations --
+                // Fetch reservations
                 const { data: resData, error: resErr } = await supabase.functions.invoke(
                     "view_reservations",
                     { body: { status: "pending" } }
                 );
                 if (resErr) throw resErr;
-                if (!resData?.reservations) {
-                    throw new Error("No reservations array in response");
-                }
-                const reservationsData = resData.reservations;
+                if (!resData?.reservations) throw new Error("No reservations array in response");
 
-                // Map senior IDs to names
-                const seniorIds = [
-                    ...new Set(reservationsData.map((r) => r.senior_id).filter(Boolean)),
-                ];
-                const { data: profilesData, error: profilesErr } = await supabase
-                    .from("profile")
-                    .select("id, first_name, last_name")
-                    .in("id", seniorIds);
-                if (profilesErr) throw profilesErr;
-                const nameMap = {};
-                profilesData.forEach((p) => {
-                    nameMap[p.id] = `${p.first_name} ${p.last_name}`;
-                });
-
-                // Filter only today or past, then enrich
+                // Only keep past or today
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-                const enriched = reservationsData
-                    .filter((r) => {
-                        const d = new Date(r.date);
-                        d.setHours(0, 0, 0, 0);
-                        return d <= today;
-                    })
-                    .map((r) => ({
-                        ...r,
-                        senior_name: nameMap[r.senior_id] || "Unknown",
-                    }));
-                setReservations(enriched);
+                const filtered = resData.reservations.filter((r) => {
+                    const d = new Date(r.date);
+                    d.setHours(0, 0, 0, 0);
+                    return d <= today;
+                });
 
-                // -- Fetch total hours --
-                const {
-                    data: { session },
-                } = await supabase.auth.getSession();
+                setReservations(filtered);
+
+                // Fetch total hours
+                const { data: { session } } = await supabase.auth.getSession();
                 const accessToken = session?.access_token;
                 const hoursRes = await fetch(
                     `${supabase.supabaseUrl}/functions/v1/get_total_hours`,
-                    {
-                        method: "GET",
-                        headers: { Authorization: `Bearer ${accessToken}` },
-                    }
+                    { method: "GET", headers: { Authorization: `Bearer ${accessToken}` } }
                 );
                 if (!hoursRes.ok) {
                     const errJson = await hoursRes.json();
@@ -112,39 +82,24 @@ export default function Timesheet() {
         fetchData();
     }, [user, profile, supabase]);
 
-    // 3) Access guards
-    if (!user || profile === null || loading) {
-        return <LoadingOverlay message="Loading your profile data" />;
-    }
+    // Access guards
+    if (!user || profile === null || loading) return <LoadingOverlay message="Loading your profile data" />;
     if (profile.user_role !== "volunteer") {
         return (
             <div style={{ textAlign: "center", margin: "3rem auto", maxWidth: "400px" }}>
-                <p
-                    style={{
-                        color: "crimson",
-                        fontSize: "1.2rem",
-                        fontWeight: "bold",
-                    }}
-                >
-                    🚫 Access Denied
-                </p>
+                <p style={{ color: "crimson", fontSize: "1.2rem", fontWeight: "bold" }}>🚫 Access Denied</p>
                 <p>This page is only available to volunteers.</p>
             </div>
         );
     }
-    if (error) {
-        return <p style={{ color: "crimson" }}>Error: {error}</p>;
-    }
+    if (error) return <p style={{ color: "crimson" }}>Error: {error}</p>;
 
-    // 4) Handlers
-    const handleChange = (id, value) => {
-        setDescriptions((prev) => ({ ...prev, [id]: value }));
-    };
+    // Handlers
+    const handleChange = (id, value) => setDescriptions(prev => ({ ...prev, [id]: value }));
     const handleSubmit = async (id) => {
-        const description = descriptions[id] || "";
         try {
             const { error } = await supabase.functions.invoke("update_reservations", {
-                body: { action: "complete", reservation_id: id, description },
+                body: { action: "complete", reservation_id: id, description: descriptions[id] || "" },
             });
             if (error) throw error;
             alert("Session marked as complete!");
@@ -166,66 +121,41 @@ export default function Timesheet() {
         }
     };
 
-    // 5) Render
+    // Render
     return (
         <div style={{ padding: "2rem", maxWidth: "700px", margin: "0 auto" }}>
-            <h1
-                style={{
-                    color: "#8d171b",
-                    fontSize: "2rem",
-                    marginBottom: "1rem",
-                }}
-            >
-                Timesheet
-            </h1>
+            <h1 style={{ color: "#8d171b", fontSize: "2rem", marginBottom: "1rem" }}>Timesheet</h1>
 
-            {/* Total Hours */}
             {totalHours !== null && (
-                <div
-                    style={{
-                        marginBottom: "1.5rem",
-                        padding: "0.75rem 1.25rem",
-                        backgroundColor: "#f5f5f5",
-                        borderRadius: "6px",
-                        border: "1px solid #ccc",
-                        fontSize: "1.1rem",
-                        color: 'black'
-                    }}
-                >
-                    <strong>Total Hours Completed:</strong>{" "}
-                    {(totalHours / 60).toFixed(2)} hrs
+                <div style={{
+                    marginBottom: "1.5rem",
+                    padding: "0.75rem 1.25rem",
+                    backgroundColor: "#f5f5f5",
+                    borderRadius: "6px",
+                    border: "1px solid #ccc",
+                    fontSize: "1.1rem",
+                    color: 'black'
+                }}>
+                    <strong>Total Hours Completed:</strong> {(totalHours / 60).toFixed(2)} hrs
                 </div>
             )}
 
-            {/* Sessions */}
             {reservations.length === 0 ? (
                 <p>No past or today’s reservations to log.</p>
             ) : (
-                reservations.map((r) => (
-                    <div
-                        key={r.id}
-                        style={{
-                            marginBottom: "2rem",
-                            padding: "1rem",
-                            background: "#fff",
-                            borderRadius: "8px",
-                            boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
-                        }}
-                    >
-                        <p>
-                            <strong>Session with:</strong> {r.senior_name}
-                        </p>
-                        <p>
-                            <strong>Date:</strong>{" "}
-                            {new Date(r.date).toLocaleString("en-CA", {
-                                dateStyle: "medium",
-                                timeStyle: "short",
-                            })}
-                        </p>
+                reservations.map(r => (
+                    <div key={r.id} style={{
+                        marginBottom: "2rem",
+                        padding: "1rem",
+                        background: "#fff",
+                        borderRadius: "8px",
+                        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                    }}>
+                        <p><strong>Date:</strong> {new Date(r.date).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}</p>
                         <textarea
                             placeholder="What did you do during this session?"
                             value={descriptions[r.id] || ""}
-                            onChange={(e) => handleChange(r.id, e.target.value)}
+                            onChange={e => handleChange(r.id, e.target.value)}
                             style={{
                                 width: "100%",
                                 minHeight: "80px",
@@ -238,22 +168,16 @@ export default function Timesheet() {
                         />
                         <div style={{ display: "flex", gap: "1rem" }}>
                             <button onClick={() => handleSubmit(r.id)}>Submit</button>
-                            <button
-                                onClick={() => handleCancel(r.id)}
-                                style={{ backgroundColor: "gray" }}
-                            >
-                                Cancel
-                            </button>
+                            <button onClick={() => handleCancel(r.id)} style={{ backgroundColor: "gray" }}>Cancel</button>
                         </div>
                     </div>
                 ))
             )}
 
-            {/* Back Button */}
             <div style={{ textAlign: "center", marginTop: "1rem" }}>
                 <button
                     type="button"
-                    onClick={() => (window.location.href = "/profile")}
+                    onClick={() => window.location.href = "/"}
                     style={{
                         backgroundColor: "#8d171b",
                         color: "#fff",
@@ -265,7 +189,7 @@ export default function Timesheet() {
                         cursor: "pointer",
                     }}
                 >
-                    ← Back to Profile
+                    ← Back
                 </button>
             </div>
         </div>
