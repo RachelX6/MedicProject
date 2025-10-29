@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
-import LoadingOverlay from '../../components/LoadingOverlay'
+import LoadingOverlay from '../components/LoadingOverlay'
 
 export default function Timesheet() {
     const supabase = useSupabaseClient();

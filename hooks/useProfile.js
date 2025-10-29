@@ -15,35 +15,19 @@ export default function useProfile() {
     const loadProfile = async () => {
       setLoading(true)
 
-      // Fetch from volunteer_profiles
-      const { data: volunteer, error: vError } = await supabase
-        .from('volunteer_profiles')
-        .select('user_id, name, senior_home')
-        .eq('user_id', user.id)
-        .single()
-
-      if (vError) {
-        console.error('Error loading volunteer profile:', vError)
-        setLoading(false)
-        return
-      }
-
-      // Fetch private info (status, phone_number)
-      const { data: privateData, error: pError } = await supabase
+      // Fetch the volunteer’s private profile
+      const { data, error } = await supabase
         .from('private_volunteer_profiles')
-        .select('status, phone_number')
+        .select('user_id, status, phone_number, email, birthday, gender')
         .eq('user_id', user.id)
         .single()
 
-      if (pError) {
-        console.warn('No private volunteer info found (optional):', pError)
+      if (error) {
+        console.error('Error loading volunteer profile:', error)
+        setProfile(null)
+      } else {
+        setProfile(data)
       }
-
-      setProfile({
-        ...volunteer,
-        ...privateData,
-        email: user.email
-      })
 
       setLoading(false)
     }

@@ -1,4 +1,3 @@
-// pages/api/auth/callback.js
 import { createPagesServerClient } from '@supabase/auth-helpers-nextjs'
 
 export default async function handler(req, res) {
@@ -10,8 +9,8 @@ export default async function handler(req, res) {
     return
   }
 
-  const { error: exchangeError } = 
-    await supabase.auth.exchangeCodeForSession(code)
+  // Exchange OAuth code for a Supabase session
+  const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
   if (exchangeError) {
     console.error('OAuth exchange error:', exchangeError)
     res.redirect(307, '/?error=oauth')
@@ -24,19 +23,21 @@ export default async function handler(req, res) {
     return
   }
 
-  // 👇 make sure this matches your actual table name!
+  // ✅ Check if a volunteer profile exists for this user
   const { data: profile, error: profileError } = await supabase
-    .from('profile')
-    .select('id')
-    .eq('id', session.user.id)
+    .from('private_volunteer_profiles')
+    .select('user_id')
+    .eq('user_id', session.user.id)
     .maybeSingle()
 
   if (profileError) {
-    console.error('Profile lookup error:', profileError)
-    res.redirect(307, '/dashboard')
+    console.error('Volunteer profile lookup error:', profileError)
+    res.redirect(307, '/profile')
     return
   }
 
+  // ✅ If they already have a volunteer profile, send them to their dashboard/profile
+  // Otherwise, send them to register to complete setup
   const destination = profile ? '/profile' : '/register'
   res.redirect(307, destination)
 }

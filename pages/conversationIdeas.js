@@ -17,7 +17,7 @@ export default function ConversationIdeas() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
-
+      //This won't work as we don't have this built yet!
       const res = await fetch(`${supabase.supabaseUrl}/functions/v1/find_common_activities`, {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
@@ -37,19 +37,6 @@ export default function ConversationIdeas() {
       setLoadingIdeas(false)
     }
   }
-
-  // ✅ Load volunteer info (optional, for future use)
-  useEffect(() => {
-    if (!user) return
-    supabase
-      .from('private_volunteer_profiles')
-      .select('user_id')
-      .eq('user_id', user.id)
-      .single()
-      .then(({ error }) => {
-        if (error) console.error('Error loading volunteer profile:', error)
-      })
-  }, [user, supabase])
 
   // ✅ Load cached or fresh ideas
   useEffect(() => {
@@ -175,5 +162,7 @@ export default function ConversationIdeas() {
         </button>
       </div>
     </div>
+
+   
   )
 }

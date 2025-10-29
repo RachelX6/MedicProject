@@ -1,6 +1,8 @@
+'use client'
+
 import { useState, useEffect } from 'react'
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
-import { useRouter } from 'next/router'
+import { useRouter } from 'next/navigation'
 import LoadingOverlay from '../components/LoadingOverlay'
 
 export default function Register() {
@@ -9,30 +11,26 @@ export default function Register() {
   const router = useRouter()
 
   const [form, setForm] = useState({
-    full_name: '',
+    first_name: '',
+    preferred_name: '',
+    last_name: '',
     phone_number: '',
+    gender: '',
+    birthday: '',
     senior_home: '',
+    email: ''
   })
 
-  const [seniorHomes, setSeniorHomes] = useState([])
   const [loading, setLoading] = useState(false)
 
-  // Fetch list of senior homes for dropdown
-  useEffect(() => {
-    const fetchSeniorHomes = async () => {
-      const { data, error } = await supabase.from('senior_homes').select('*')
-      if (error) console.error('Error loading senior homes:', error)
-      else setSeniorHomes(data)
-    }
-    fetchSeniorHomes()
-  }, [supabase])
-
-  // Pre-fill email or name from Supabase user metadata
   useEffect(() => {
     if (user) {
       setForm(prev => ({
         ...prev,
-        full_name: user.user_metadata.full_name || '',
+        email: user.email || '',
+        first_name: user.user_metadata?.first_name || '',
+        last_name: user.user_metadata?.last_name || '',
+        preferred_name: user.user_metadata?.full_name || user.email || ''
       }))
     }
   }, [user])
@@ -45,61 +43,105 @@ export default function Register() {
   const complete = async (e) => {
     e.preventDefault()
 
-    if (!form.full_name || !form.phone_number || !form.senior_home) {
-      alert('Please fill out all required fields.')
-      return
+    // Validate required fields
+    for (const [key, value] of Object.entries(form)) {
+      if (!value) {
+        alert(`Please fill out ${key.replace('_', ' ')}`)
+        return
+      }
     }
 
     try {
       setLoading(true)
 
-      // 1️⃣ Create or update volunteer_profiles
-      const { error: profileError } = await supabase
-        .from('volunteer_profiles')
-        .upsert({
-          user_id: user.id,
-          full_name: form.full_name,
-          senior_home: form.senior_home,
-        })
+      // ✅ Call your Edge Function instead of direct insert
+      const { data, error } = await supabase.functions.invoke('register_new_user', {
+        body: {
+          profileData: {
+            preferred_name: form.preferred_name,
+            first_name: form.first_name,
+            last_name: form.last_name,
+            phone_number: form.phone_number,
+            email: form.email,
+            gender: form.gender,
+            date_of_birth: form.birthday,
+            // ✅ Backend receives key values (casa_mia, pinegrove, point_grey)
+            senior_home: form.senior_home
+          }
+        }
+      })
 
-      if (profileError) throw profileError
+      if (error) {
+        console.error('Edge Function error:', error)
+        alert('Error saving profile: ' + error.message)
+        return
+      }
 
-      // 2️⃣ Create or update private_volunteer_profiles
-      const { error: privateError } = await supabase
-        .from('private_volunteer_profiles')
-        .upsert({
-          user_id: user.id,
-          phone_number: form.phone_number,
-          status: 'active', // default status
-        })
+      if (data?.error) {
+        console.error('Edge Function returned error:', data)
+        alert(data.error || 'Error saving profile.')
+        return
+      }
 
-      if (privateError) throw privateError
-
+      alert('Profile registered successfully!')
       router.push('/profile')
     } catch (err) {
-      console.error('Error completing registration:', err)
-      alert('Could not complete registration. Please try again.')
+      console.error('Unexpected error:', err)
+      alert('Unexpected error—check console')
     } finally {
       setLoading(false)
     }
   }
 
   if (!user) return <LoadingOverlay message="Loading user..." />
-  if (loading) return <LoadingOverlay message="Saving your profile..." />
+  if (loading) return <LoadingOverlay message="Completing registration..." />
 
   return (
     <div className="form-container">
-      <h1>Complete Your Volunteer Profile</h1>
+      <h1>One more step…</h1>
       <form onSubmit={complete}>
-        {/* Full Name */}
+        {/* First Name */}
         <div className="form-group">
-          <label htmlFor="full_name">Full Name</label>
+          <label htmlFor="first_name">First Name</label>
           <input
-            id="full_name"
-            name="full_name"
-            value={form.full_name}
+            id="first_name"
+            name="first_name"
+            value={form.first_name}
             onChange={handleChange}
-            required
+          />
+        </div>
+
+        {/* Preferred Name */}
+        <div className="form-group">
+          <label htmlFor="preferred_name">Preferred Name</label>
+          <input
+            id="preferred_name"
+            name="preferred_name"
+            value={form.preferred_name}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Last Name */}
+        <div className="form-group">
+          <label htmlFor="last_name">Last Name</label>
+          <input
+            id="last_name"
+            name="last_name"
+            value={form.last_name}
+            onChange={handleChange}
+          />
+        </div>
+
+        {/* Email */}
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={form.email}
+            onChange={handleChange}
           />
         </div>
 
@@ -110,11 +152,42 @@ export default function Register() {
             id="phone_number"
             name="phone_number"
             type="tel"
+            inputMode="numeric"
             pattern="[0-9]*"
             maxLength={15}
             value={form.phone_number}
             onChange={handleChange}
-            required
+            onKeyPress={(e) => {
+              if (!/[0-9]/.test(e.key)) e.preventDefault()
+            }}
+          />
+        </div>
+
+        {/* Gender */}
+        <div className="form-group">
+          <label htmlFor="gender">Gender</label>
+          <select
+            id="gender"
+            name="gender"
+            value={form.gender}
+            onChange={handleChange}
+          >
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        {/* Birthday */}
+        <div className="form-group">
+          <label htmlFor="birthday">Birthday</label>
+          <input
+            type="date"
+            id="birthday"
+            name="birthday"
+            value={form.birthday}
+            onChange={handleChange}
           />
         </div>
 
@@ -126,20 +199,18 @@ export default function Register() {
             name="senior_home"
             value={form.senior_home}
             onChange={handleChange}
-            required
           >
             <option value="">Select a senior home</option>
-            {seniorHomes.map(home => (
-              <option key={home.id} value={home.name}>
-                {home.name}
-              </option>
-            ))}
+            <option value="casa_mia">Casa Mia — 1920 SW Marine Dr, Vancouver, BC</option>
+            <option value="pinegrove">Pinegrove Place — 11331 Mellis Dr, Richmond, BC</option>
+            <option value="point_grey">Point Grey Private Hospital — 2423 Cornwall Ave, Vancouver, BC</option>
           </select>
         </div>
 
-        <button type="submit" className="submit-btn">Save Profile</button>
+        <button type="submit" className="submit-btn">Complete Registration</button>
       </form>
 
+      {/* ✅ Your original styling */}
       <style jsx>{`
         .form-container {
           max-width: 400px;
@@ -162,7 +233,7 @@ export default function Register() {
         label {
           margin-bottom: 0.5rem;
           font-weight: bold;
-          color: #000;
+          color: #000000ff;
         }
         input,
         select {
@@ -181,6 +252,7 @@ export default function Register() {
           border: none;
           border-radius: 5px;
           cursor: pointer;
+          transition: background 0.2s ease;
         }
         .submit-btn:hover {
           background-color: #6f1317;
