@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/router'
+import useProfile from '../hooks/useProfile'
 
 export default function EditProfile() {
   const supabase = useSupabaseClient()
   const user = useUser()
   const router = useRouter()
+  const { profile, loading } = useProfile()
 
   const [form, setForm] = useState({
     first_name: '',
@@ -20,29 +22,24 @@ export default function EditProfile() {
     email: ''
   })
 
+  // Prefill form when profile data loads
   useEffect(() => {
-    const fetchProfile = async () => {
-      if (!user) return
-
-      const { data, error } = await supabase
-        .from('profile')
-        .select('*')
-        .eq('email', user.email)
-        .single()
-
-      if (error) {
-        console.error('Error loading profile:', error)
-        return
-      }
-
+    if (profile) {
       setForm({
-        ...data,
-        secondary_language: data.secondary_language?.join(', ') || '',
+        first_name: profile.first_name || '',
+        preferred_name: profile.preferred_name || '',
+        last_name: profile.last_name || '',
+        phone_number: profile.phone_number || '',
+        gender: profile.gender || '',
+        birthday: profile.birthday || '',
+        primary_language: profile._private?.primary_language || '',
+        secondary_language: profile._private?.secondary_language?.join(', ') || '',
+        senior_home: profile.senior_home || '',
+        email: profile.email || ''
       })
     }
+  }, [profile])
 
-    fetchProfile()
-  }, [user])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -52,27 +49,51 @@ export default function EditProfile() {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
+    if (!user) return
+
     const secondaryList = form.secondary_language
       ? form.secondary_language.split(',').map(s => s.trim())
       : []
 
-    const updatedProfile = { ...form, secondary_language: secondaryList }
+    try {
+      // Update public profile (volunteer_profiles)
+      const { error: publicError } = await supabase
+        .from('volunteer_profiles')
+        .update({
+          first_name: form.first_name,
+          last_name: form.last_name,
+          preferred_name: form.preferred_name,
+          senior_home: form.senior_home,
+        })
+        .eq('user_id', user.id)
 
-    const { error } = await supabase
-      .from('profile')
-      .update(updatedProfile)
-      .eq('email', form.email)
+      if (publicError) throw publicError
 
-    if (error) {
-      console.error('Update failed:', error)
-      alert('Failed to update profile.')
-    } else {
+      // Update private profile (private_volunteer_profiles)
+      const { error: privateError } = await supabase
+        .from('private_volunteer_profiles')
+        .update({
+          preferred_name: form.preferred_name,
+          email: form.email,
+          phone_number: form.phone_number,
+          gender: form.gender,
+          birthday: form.birthday,
+          primary_language: form.primary_language,
+          secondary_language: secondaryList,
+        })
+        .eq('user_id', user.id)
+
+      if (privateError) throw privateError
+
       alert('Profile updated successfully!')
-      router.push('/') // go to dashboard instead of profile
+      router.push('/profile')
+    } catch (error) {
+      console.error('Update failed:', error)
+      alert('Failed to update profile: ' + error.message)
     }
   }
 
-  if (!user) return <p>Loading...</p>
+  if (!user || loading) return <p>Loading...</p>
 
   const seniorHomes = [
     'Arbutus Care Center', 'Casa Mia', 'Opal by Element', 'Pinegrove Place',

@@ -1,8 +1,6 @@
-'use client'
-
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/router'
 import LoadingOverlay from '../components/LoadingOverlay'
 
 export default function ProfilePage() {
@@ -125,6 +123,14 @@ export default function ProfilePage() {
       {/* Quick Links */}
       <section className="profile-actions">
         <h2>Quick Links</h2>
+        {profile?.senior_home && (
+          <button
+            onClick={() => router.push(`/senior-home/${profile.senior_home}`)}
+            className="main-btn senior-home-btn"
+          >
+            🏥 {formatHome(profile.senior_home)} Information
+          </button>
+        )}
         <button onClick={() => router.push('/conversationIdeas')} className="main-btn">
           💭 Conversation Ideas
         </button>
@@ -138,22 +144,22 @@ export default function ProfilePage() {
 
       <style jsx>{`
         .profile-container {
-          max-width: 600px;
+          max-width: 700px;
           margin: 2rem auto;
-          padding: 2rem;
+          padding: 2.5rem;
           background: #fff;
-          border-radius: 10px;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-          color: black;
+          border-radius: 12px;
+          box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+          color: #171717;
         }
 
         .profile-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          border-bottom: 1px solid #ddd;
-          padding-bottom: 1rem;
-          margin-bottom: 1rem;
+          border-bottom: 2px solid #f0f0f0;
+          padding-bottom: 1.5rem;
+          margin-bottom: 1.5rem;
         }
 
         h1 {
@@ -186,40 +192,63 @@ export default function ProfilePage() {
         .main-btn {
           display: block;
           width: 100%;
-          margin: 0.5rem 0;
-          padding: 0.75rem 1rem;
-          border: 1px solid #ccc;
-          border-radius: 5px;
-          background-color: #f5f5f5;
-          color: black;
+          margin: 0.75rem 0;
+          padding: 1rem 1.25rem;
+          border: 1px solid #e0e0e0;
+          border-radius: 8px;
+          background-color: #ffffff;
+          color: #171717;
           font-size: 1rem;
           text-align: left;
           cursor: pointer;
-          transition: background 0.2s ease;
+          transition: all 0.2s ease;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
 
         .main-btn:hover {
-          background-color: #eee;
+          background-color: #f8f9fa;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+          transform: translateY(-1px);
         }
 
         .small-btn {
-          background: #f5f5f5;
-          border: 1px solid #ccc;
-          padding: 0.4rem 0.75rem;
-          border-radius: 5px;
+          background: #ffffff;
+          border: 1px solid #e0e0e0;
+          padding: 0.5rem 1rem;
+          border-radius: 6px;
           cursor: pointer;
           font-size: 0.9rem;
-          color: black;
+          color: #171717;
+          transition: all 0.2s;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.06);
         }
 
         .small-btn:hover {
-          background-color: #eee;
+          background-color: #f8f9fa;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+          transform: translateY(-1px);
         }
 
         .logout-btn {
           background-color: #8d171b;
           color: white;
           border: none;
+        }
+
+        .logout-btn:hover {
+          background-color: #6f1317;
+        }
+
+        .senior-home-btn {
+          background-color: #8d171b;
+          color: white;
+          border: 2px solid #8d171b;
+          font-weight: 600;
+        }
+
+        .senior-home-btn:hover {
+          background-color: #6f1317;
+          border-color: #6f1317;
         }
 
         .logout-btn:hover {

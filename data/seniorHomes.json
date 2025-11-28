@@ -1,0 +1,107 @@
+{
+    "casa_mia": {
+        "slug": "casa_mia",
+        "name": "Casa Mia",
+        "fullName": "Casa Mia Senior Living",
+        "tagline": "A warm and welcoming community",
+        "address": "1920 SW Marine Dr, Vancouver, BC",
+        "color": "#e67e22",
+        "introduction": "Welcome to Casa Mia Senior Living, a warm and welcoming community dedicated to providing exceptional care and enriching experiences for our residents. As a MEDIC Foundation volunteer, you play a vital role in brightening the lives of our senior community members through meaningful connections and engaging activities.",
+        "checklist": [
+            "Complete volunteer orientation session",
+            "Review facility safety protocols and emergency procedures",
+            "Submit required screening documents",
+            "Familiarize yourself with resident activity preferences",
+            "Sign in at reception desk before each visit"
+        ],
+        "resources": [
+            {
+                "title": "Volunteer Handbook",
+                "description": "Essential guidelines and best practices for volunteers",
+                "url": "#volunteer-handbook"
+            },
+            {
+                "title": "Activity Ideas Guide",
+                "description": "Suggestions for engaging activities with residents",
+                "url": "#activity-guide"
+            },
+            {
+                "title": "Contact Information",
+                "description": "Key contacts and emergency numbers",
+                "url": "#contacts"
+            }
+        ],
+        "screeningLink": "https://screening-link-placeholder.com/casa-mia",
+        "screeningInstructions": "All volunteers must complete a criminal background check before their first visit. Please allow 5-7 business days for processing. Click the button below to begin the screening process."
+    },
+    "pinegrove": {
+        "slug": "pinegrove",
+        "name": "Pinegrove Place",
+        "fullName": "Pinegrove Place Care Home",
+        "tagline": "Care with compassion",
+        "address": "11331 Mellis Dr, Richmond, BC",
+        "color": "#27ae60",
+        "introduction": "Welcome to Pinegrove Place Care Home, where compassionate care meets a vibrant community atmosphere. Our residents benefit greatly from the kindness and dedication of MEDIC Foundation volunteers who bring joy, companionship, and meaningful activities to their daily lives.",
+        "checklist": [
+            "Complete volunteer orientation session",
+            "Review facility safety protocols and emergency procedures",
+            "Submit required screening documents",
+            "Familiarize yourself with resident activity preferences",
+            "Sign in at reception desk before each visit"
+        ],
+        "resources": [
+            {
+                "title": "Volunteer Handbook",
+                "description": "Essential guidelines and best practices for volunteers",
+                "url": "#volunteer-handbook"
+            },
+            {
+                "title": "Activity Ideas Guide",
+                "description": "Suggestions for engaging activities with residents",
+                "url": "#activity-guide"
+            },
+            {
+                "title": "Contact Information",
+                "description": "Key contacts and emergency numbers",
+                "url": "#contacts"
+            }
+        ],
+        "screeningLink": "https://screening-link-placeholder.com/pinegrove",
+        "screeningInstructions": "All volunteers must complete a criminal background check before their first visit. Please allow 5-7 business days for processing. Click the button below to begin the screening process."
+    },
+    "point_grey": {
+        "slug": "point_grey",
+        "name": "Point Grey Private Hospital",
+        "fullName": "Point Grey Private Hospital",
+        "tagline": "Excellence in senior care",
+        "address": "2423 Cornwall Ave, Vancouver, BC",
+        "color": "#3498db",
+        "introduction": "Welcome to Point Grey Private Hospital, a prestigious facility committed to excellence in senior care. As a MEDIC Foundation volunteer, you join a team dedicated to enhancing the quality of life for our residents through compassionate service and engaging activities tailored to their unique needs and interests.",
+        "checklist": [
+            "Complete volunteer orientation session",
+            "Review facility safety protocols and emergency procedures",
+            "Submit required screening documents",
+            "Familiarize yourself with resident activity preferences",
+            "Sign in at reception desk before each visit"
+        ],
+        "resources": [
+            {
+                "title": "Volunteer Handbook",
+                "description": "Essential guidelines and best practices for volunteers",
+                "url": "#volunteer-handbook"
+            },
+            {
+                "title": "Activity Ideas Guide",
+                "description": "Suggestions for engaging activities with residents",
+                "url": "#activity-guide"
+            },
+            {
+                "title": "Contact Information",
+                "description": "Key contacts and emergency numbers",
+                "url": "#contacts"
+            }
+        ],
+        "screeningLink": "https://screening-link-placeholder.com/point-grey",
+        "screeningInstructions": "All volunteers must complete a criminal background check before their first visit. Please allow 5-7 business days for processing. Click the button below to begin the screening process."
+    }
+}

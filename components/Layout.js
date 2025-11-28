@@ -22,15 +22,20 @@ export default function Layout({ children }) {
   }
 
   return (
-    <>
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      minHeight: '100vh',
+    }}>
       <header
         style={{
-          backgroundColor: '#8d171b',
+          background: 'linear-gradient(135deg, #8d171b 0%, #b91d24 100%)',
           color: 'white',
-          padding: '1rem',
+          padding: '1rem 2rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
+          boxShadow: '0 2px 12px rgba(0, 0, 0, 0.15)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center' }}>
@@ -41,20 +46,37 @@ export default function Layout({ children }) {
             height={40}
             style={{ marginRight: '1rem' }}
           />
-          <h1 style={{ margin: 0, fontFamily: 'Raleway, sans-serif' }}>
+          <h1 style={{ margin: 0, fontFamily: 'Raleway, sans-serif', fontSize: '1.5rem' }}>
             MEDIC Foundation
           </h1>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
           {!isLoginPage && (
-            <nav style={{ marginRight: '1rem' }}>
-              <Link href="/profile" style={{ marginRight: '1rem', color: 'white' }}>
+            <nav style={{ display: 'flex', gap: '1.5rem' }}>
+              <Link
+                href="/profile"
+                style={{
+                  color: 'white',
+                  textDecoration: 'none',
+                  fontWeight: '500',
+                  transition: 'opacity 0.2s',
+                  opacity: router.pathname === '/profile' ? 1 : 0.9
+                }}
+              >
                 Profile
               </Link>
 
-              {/* ✅ Always show Timesheet for volunteers */}
-              <Link href="/timesheet" style={{ marginRight: '1rem', color: 'white' }}>
+              <Link
+                href="/timesheet"
+                style={{
+                  color: 'white',
+                  textDecoration: 'none',
+                  fontWeight: '500',
+                  transition: 'opacity 0.2s',
+                  opacity: router.pathname === '/timesheet' ? 1 : 0.9
+                }}
+              >
                 Timesheet
               </Link>
             </nav>
@@ -66,44 +88,61 @@ export default function Layout({ children }) {
               style={{
                 backgroundColor: 'white',
                 color: '#8d171b',
-                padding: '0.4rem',
+                padding: '0.5rem 0.75rem',
                 border: 'none',
-                borderRadius: '5px',
+                borderRadius: '6px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
+                gap: '0.5rem',
+                fontWeight: '500',
+                transition: 'all 0.2s',
+                boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
               }}
               title="Log out"
+              onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+              onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
             >
-              <LogOut size={20} />
+              <LogOut size={18} />
+              <span>Logout</span>
             </button>
           )}
         </div>
       </header>
 
-      <main style={{ padding: '2rem' }}>{children}</main>
+      <main style={{
+        flex: 1,
+        padding: '2rem',
+      }}>
+        {children}
+      </main>
 
       <footer
         style={{
-          marginTop: '2rem',
-          padding: '1rem',
-          backgroundColor: '#f5f5f5',
+          marginTop: 'auto',
+          padding: '1.5rem',
+          backgroundColor: '#f8f9fa',
           textAlign: 'center',
           fontSize: '0.9rem',
-          color: '#333',
-          borderTop: '1px solid #ddd',
+          color: '#555',
+          borderTop: '1px solid #e0e0e0',
         }}
       >
-        <p>
+        <p style={{ margin: 0 }}>
           If you have any questions, concerns, or need support, please reach out to us at{' '}
           <a
             href="mailto:it.medicfoundation@gmail.com"
-            style={{ color: '#8d171b', textDecoration: 'underline' }}
+            style={{
+              color: '#8d171b',
+              textDecoration: 'none',
+              fontWeight: '500',
+              transition: 'opacity 0.2s'
+            }}
           >
             it.medicfoundation@gmail.com
           </a>
         </p>
       </footer>
-    </>
+    </div>
   )
 }

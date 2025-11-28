@@ -1,5 +1,3 @@
-'use client'
-
 import { useEffect, useState } from "react";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { invokeFunction } from '../lib/supabaseFunctions'
@@ -23,7 +21,7 @@ export default function Timesheet() {
             setLoading(true);
             try {
                 // Fetch volunteer's reservations using helper
-                const { data: resData } = await invokeFunction(supabase, 'view_reservations', { body: { status: 'pending' } })
+                const { data: resData } = await invokeFunction(supabase, 'view_reservations', { body: { filters: { status: 'pending' } } })
                 if (!resData?.reservations) throw new Error('No reservations returned')
 
                 const today = new Date();
@@ -38,10 +36,14 @@ export default function Timesheet() {
 
                 setReservations(filtered);
 
-                // Load total hours
-                // Use helper which will attach user's token when available
-                const { data: { total_hours } = {} } = await invokeFunction(supabase, 'get_total_hours', { method: 'GET', requireAuth: true })
-                setTotalHours(total_hours ?? 0);
+                // Load total hours - wrapped in try-catch in case function doesn't exist
+                try {
+                    const { data: { total_minutes } = {} } = await invokeFunction(supabase, 'get_total_hours', { method: 'GET', requireAuth: true })
+                    setTotalHours(total_minutes ?? 0); // Store minutes, will convert to hours in display
+                } catch (hourErr) {
+                    console.warn('get_total_hours function not available:', hourErr);
+                    setTotalHours(0); // Default to 0 if function doesn't exist
+                }
 
             } catch (err) {
                 console.error("Timesheet error:", err);
@@ -92,38 +94,57 @@ export default function Timesheet() {
     };
 
     return (
-        <div style={{ padding: "2rem", maxWidth: "700px", margin: "0 auto" }}>
-            <h1 style={{ color: "#8d171b", fontSize: "2rem", marginBottom: "1rem" }}>Timesheet</h1>
+        <div style={{
+            maxWidth: "750px",
+            margin: "2rem auto",
+            padding: "2.5rem",
+            backgroundColor: "#ffffff",
+            borderRadius: "12px",
+            boxShadow: "0 2px 12px rgba(0, 0, 0, 0.08)",
+        }}>
+            <h1 style={{
+                color: "#8d171b",
+                fontSize: "2rem",
+                marginBottom: "1.5rem"
+            }}>Timesheet</h1>
 
             {totalHours !== null && (
                 <div style={{
-                    marginBottom: "1.5rem",
-                    padding: "0.75rem 1.25rem",
-                    backgroundColor: "#f5f5f5",
-                    borderRadius: "6px",
-                    border: "1px solid #ccc",
+                    marginBottom: "2rem",
+                    padding: "1rem 1.5rem",
+                    backgroundColor: "#f8f9fa",
+                    borderRadius: "8px",
+                    border: "1px solid #e0e0e0",
                     fontSize: "1.1rem",
-                    color: 'black'
+                    color: '#171717',
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
                 }}>
-                    <strong>Total Hours Completed:</strong> {(totalHours / 60).toFixed(2)} hrs
+                    <strong>Total Hours Completed:</strong> {(totalHours / 60).toFixed(2)} hrs ({totalHours} minutes)
                 </div>
             )}
 
             {reservations.length === 0 ? (
-                <p>No past or today’s reservations to log.</p>
+                <p style={{ color: "#666", textAlign: "center" }}>No past or today's reservations to log.</p>
             ) : (
                 reservations.map(r => (
                     <div key={r.id} style={{
                         marginBottom: "2rem",
-                        padding: "1rem",
-                        background: "#fff",
-                        borderRadius: "8px",
-                        boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                        padding: "1.5rem",
+                        background: "#ffffff",
+                        borderRadius: "10px",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                        border: "1px solid #e0e0e0",
                     }}>
-                        <p><strong>Date:</strong> {new Date(r.date).toLocaleString("en-CA", {
-                            dateStyle: "medium",
-                            timeStyle: "short"
-                        })}</p>
+                        <p style={{
+                            marginBottom: "1rem",
+                            color: "#171717",
+                            fontWeight: "500"
+                        }}>
+                            <strong>Date:</strong> {new Date(r.date).toLocaleString("en-CA", {
+                                dateStyle: "medium",
+                                timeStyle: "short"
+                            })}
+                        </p>
 
                         <textarea
                             placeholder="Describe your session..."
@@ -131,20 +152,63 @@ export default function Timesheet() {
                             onChange={e => handleDescriptionChange(r.id, e.target.value)}
                             style={{
                                 width: "100%",
-                                minHeight: "80px",
-                                marginTop: "0.5rem",
-                                marginBottom: "0.5rem",
-                                padding: "0.5rem",
-                                borderRadius: "4px",
-                                border: "1px solid #ccc",
+                                minHeight: "100px",
+                                marginBottom: "1rem",
+                                padding: "0.75rem",
+                                borderRadius: "8px",
+                                border: "1px solid #e0e0e0",
+                                fontSize: "1rem",
+                                fontFamily: "inherit",
+                                resize: "vertical",
+                                color: "#171717",
+                                backgroundColor: "#f8f9fa",
                             }}
                         />
 
                         <div style={{ display: "flex", gap: "1rem" }}>
-                            <button onClick={() => handleSubmit(r.id)}>Submit</button>
+                            <button
+                                onClick={() => handleSubmit(r.id)}
+                                style={{
+                                    flex: 1,
+                                    backgroundColor: "#8d171b",
+                                    color: "white",
+                                    padding: "0.75rem",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    fontWeight: "bold",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                }}
+                                onMouseOver={(e) => {
+                                    e.currentTarget.style.backgroundColor = "#6f1317";
+                                    e.currentTarget.style.transform = "translateY(-1px)";
+                                }}
+                                onMouseOut={(e) => {
+                                    e.currentTarget.style.backgroundColor = "#8d171b";
+                                    e.currentTarget.style.transform = "translateY(0)";
+                                }}
+                            >Submit</button>
                             <button
                                 onClick={() => handleCancel(r.id)}
-                                style={{ backgroundColor: "gray" }}
+                                style={{
+                                    flex: 1,
+                                    backgroundColor: "#6c757d",
+                                    color: "white",
+                                    padding: "0.75rem",
+                                    border: "none",
+                                    borderRadius: "8px",
+                                    fontWeight: "bold",
+                                    cursor: "pointer",
+                                    transition: "all 0.2s",
+                                }}
+                                onMouseOver={(e) => {
+                                    e.currentTarget.style.backgroundColor = "#5a6268";
+                                    e.currentTarget.style.transform = "translateY(-1px)";
+                                }}
+                                onMouseOut={(e) => {
+                                    e.currentTarget.style.backgroundColor = "#6c757d";
+                                    e.currentTarget.style.transform = "translateY(0)";
+                                }}
                             >
                                 Cancel
                             </button>
@@ -153,19 +217,29 @@ export default function Timesheet() {
                 ))
             )}
 
-            <div style={{ textAlign: "center", marginTop: "1rem" }}>
+            <div style={{ textAlign: "center", marginTop: "2rem" }}>
                 <button
                     type="button"
                     onClick={() => window.location.href = "/profile"}
                     style={{
-                        backgroundColor: "#8d171b",
-                        color: "#fff",
-                        padding: "0.65rem 1.8rem",
-                        border: "none",
+                        backgroundColor: "#ffffff",
+                        color: "#8d171b",
+                        padding: "0.75rem 2rem",
+                        border: "1px solid #e0e0e0",
                         borderRadius: "8px",
-                        fontSize: "0.95rem",
+                        fontSize: "1rem",
                         fontWeight: "bold",
                         cursor: "pointer",
+                        transition: "all 0.2s",
+                        boxShadow: "0 1px 3px rgba(0, 0, 0, 0.06)",
+                    }}
+                    onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = "#f8f9fa";
+                        e.currentTarget.style.transform = "translateY(-1px)";
+                    }}
+                    onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = "#ffffff";
+                        e.currentTarget.style.transform = "translateY(0)";
                     }}
                 >
                     ← Back

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
 import useProfile from '../hooks/useProfile'
+import { invokeFunction } from '../lib/supabaseFunctions'
 
 export default function SettingsPage() {
     const supabase = useSupabaseClient()
@@ -71,12 +72,19 @@ export default function SettingsPage() {
     if (!user || !profile || loading) return <div>Loading settings…</div>
 
     return (
-        <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '1rem', backgroundColor: 'white', borderRadius: '8px' }}>
-            <h1 style={{ color: '#8d171b' }}>Settings</h1>
+        <div style={{
+            maxWidth: '700px',
+            margin: '2rem auto',
+            padding: '2.5rem',
+            backgroundColor: '#ffffff',
+            borderRadius: '12px',
+            boxShadow: '0 2px 12px rgba(0, 0, 0, 0.08)',
+        }}>
+            <h1 style={{ color: '#8d171b', marginBottom: '1.5rem', fontSize: '2rem' }}>Settings</h1>
 
-            <section style={{ marginTop: '2rem', color: 'black' }}>
-                <h3 style={{ fontSize: '1.5rem', marginBottom: '0.5rem', color: '#8d171b' }}>Email Preferences</h3>
-                <p style={{ marginBottom: '1.2rem', lineHeight: '1.6' }}>
+            <section style={{ marginTop: '2rem', color: '#171717' }}>
+                <h3 style={{ fontSize: '1.3rem', marginBottom: '1rem', color: '#8d171b', fontWeight: '600' }}>Email Preferences</h3>
+                <p style={{ marginBottom: '1.5rem', lineHeight: '1.6', color: '#666' }}>
                     Select the senior homes you would like to receive email notifications from.
                 </p>
 
@@ -128,14 +136,24 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => window.location.href = "/"}
                     style={{
-                        backgroundColor: '#ccc',
-                        color: '#333',
-                        padding: '0.65rem 1.8rem',
-                        border: 'none',
+                        backgroundColor: '#ffffff',
+                        color: '#8d171b',
+                        padding: '0.75rem 2rem',
+                        border: '1px solid #e0e0e0',
                         borderRadius: '8px',
-                        fontSize: '0.95rem',
+                        fontSize: '1rem',
                         fontWeight: 'bold',
                         cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 1px 3px rgba(0, 0, 0, 0.06)',
+                    }}
+                    onMouseOver={(e) => {
+                        e.currentTarget.style.backgroundColor = '#f8f9fa';
+                        e.currentTarget.style.transform = 'translateY(-1px)';
+                    }}
+                    onMouseOut={(e) => {
+                        e.currentTarget.style.backgroundColor = '#ffffff';
+                        e.currentTarget.style.transform = 'translateY(0)';
                     }}
                 >
                     ← Back
