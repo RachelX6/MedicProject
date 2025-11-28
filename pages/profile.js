@@ -13,7 +13,16 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  // ✅ Load profile data
+  // Format senior home nicely (casa_mia → Casa Mia)
+  const formatHome = (home) => {
+    if (!home) return '—'
+    return home
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
+  // Load profile data
   useEffect(() => {
     if (!user) return
 
@@ -21,7 +30,7 @@ export default function ProfilePage() {
       try {
         // fetch public profile
         const { data: publicData, error: publicError } = await supabase
-          .from('volunteer_profile')
+          .from('volunteer_profiles')
           .select('*')
           .eq('user_id', user.id)
           .single()
@@ -29,15 +38,23 @@ export default function ProfilePage() {
 
         // fetch private profile
         const { data: privateData, error: privateError } = await supabase
-          .from('private_volunteer_profile')
+          .from('private_volunteer_profiles')
           .select('*')
           .eq('user_id', user.id)
           .single()
         if (privateError && privateError.code !== 'PGRST116') throw privateError
 
+        // Combine the correct fields
         setProfile({
-          ...publicData,
-          ...privateData
+          first_name: publicData?.first_name || null,
+          last_name: publicData?.last_name || null,
+
+          preferred_name: privateData?.preferred_name || null,
+          email: privateData?.email || null,
+          phone_number: privateData?.phone_number || null,
+          gender: privateData?.gender || null,
+          birthday: privateData?.birthday || null,
+          senior_home: publicData?.senior_home || null
         })
       } catch (err) {
         console.error('Error loading profile:', err)
@@ -56,7 +73,7 @@ export default function ProfilePage() {
 
   if (!user || loading) return <LoadingOverlay message="Loading your profile..." />
 
-  // ✅ Simple checklist based on missing fields
+  // Simple checklist
   const todos = []
   if (!profile?.gender) todos.push('Add your gender')
   if (!profile?.birthday) todos.push('Add your birthday')
@@ -65,6 +82,7 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-container">
+
       {/* Header */}
       <header className="profile-header">
         <h1>Welcome, {profile?.preferred_name || 'Volunteer'}!</h1>
@@ -87,10 +105,10 @@ export default function ProfilePage() {
         <p><strong>Phone:</strong> {profile?.phone_number || '—'}</p>
         <p><strong>Gender:</strong> {profile?.gender || '—'}</p>
         <p><strong>Birthday:</strong> {profile?.birthday || '—'}</p>
-        <p><strong>Senior Home:</strong> {profile?.senior_home || '—'}</p>
+        <p><strong>Senior Home:</strong> {formatHome(profile?.senior_home)}</p>
       </section>
 
-      {/* Overview / To-Do Section */}
+      {/* Overview */}
       <section className="overview">
         <h2>📝 Overview / To-Do</h2>
         {todos.length > 0 ? (
@@ -100,11 +118,11 @@ export default function ProfilePage() {
             ))}
           </ul>
         ) : (
-          <p>✅ Your profile looks complete! You’re ready to start volunteering.</p>
+          <p>✅ Your profile looks complete! You are ready to start volunteering.</p>
         )}
       </section>
 
-      {/* Navigation Buttons */}
+      {/* Quick Links */}
       <section className="profile-actions">
         <h2>Quick Links</h2>
         <button onClick={() => router.push('/conversationIdeas')} className="main-btn">
@@ -113,8 +131,8 @@ export default function ProfilePage() {
         <button onClick={() => router.push('/timesheet')} className="main-btn">
           🕑 Timesheet
         </button>
-        <button onClick={() => router.push('/changeAvailability')} className="main-btn">
-          📆 Change Availability
+        <button onClick={() => router.push('/seniorComments')} className="main-btn">
+          📝 Senior Comments
         </button>
       </section>
 
@@ -163,10 +181,6 @@ export default function ProfilePage() {
           margin-bottom: 2rem;
           padding-bottom: 1rem;
           border-bottom: 1px solid #ddd;
-        }
-
-        .overview ul {
-          padding-left: 1rem;
         }
 
         .main-btn {

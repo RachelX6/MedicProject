@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
-import { useRouter } from 'next/navigation'
+import { useRouter } from 'next/router'
 import LoadingOverlay from '../components/LoadingOverlay'
 
 export default function Register() {
@@ -55,33 +55,34 @@ export default function Register() {
       setLoading(true)
 
       // ✅ Call your Edge Function instead of direct insert
-      const { data, error } = await supabase.functions.invoke('register_new_user', {
-        body: {
-          profileData: {
-            preferred_name: form.preferred_name,
-            first_name: form.first_name,
-            last_name: form.last_name,
-            phone_number: form.phone_number,
-            email: form.email,
-            gender: form.gender,
-            date_of_birth: form.birthday,
-            // ✅ Backend receives key values (casa_mia, pinegrove, point_grey)
-            senior_home: form.senior_home
+        // Call helper which uses client SDK when appropriate
+        try {
+          const { data } = await invokeFunction(supabase, 'register_new_user', {
+            body: {
+              profileData: {
+                preferred_name: form.preferred_name,
+                first_name: form.first_name,
+                last_name: form.last_name,
+                phone_number: form.phone_number,
+                email: form.email,
+                gender: form.gender,
+                date_of_birth: form.birthday,
+                // Backend receives key values (casa_mia, pinegrove, point_grey)
+                senior_home: form.senior_home,
+              },
+            },
+          })
+
+          if (data?.error) {
+            console.error('Edge Function returned error:', data)
+            alert(data.error || 'Error saving profile.')
+            return
           }
+        } catch (err) {
+          console.error('Edge Function error:', err)
+          alert('Error saving profile: ' + (err.message || String(err)))
+          return
         }
-      })
-
-      if (error) {
-        console.error('Edge Function error:', error)
-        alert('Error saving profile: ' + error.message)
-        return
-      }
-
-      if (data?.error) {
-        console.error('Edge Function returned error:', data)
-        alert(data.error || 'Error saving profile.')
-        return
-      }
 
       alert('Profile registered successfully!')
       router.push('/profile')

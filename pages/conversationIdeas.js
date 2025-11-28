@@ -17,7 +17,6 @@ export default function ConversationIdeas() {
     try {
       const { data: { session } } = await supabase.auth.getSession()
       const token = session?.access_token
-      //This won't work as we don't have this built yet!
       const res = await fetch(`${supabase.supabaseUrl}/functions/v1/find_common_activities`, {
         method: 'GET',
         headers: { Authorization: `Bearer ${token}` },
@@ -68,6 +67,9 @@ export default function ConversationIdeas() {
         <div className="loader" style={{ margin: '0 auto 1rem auto' }} />
         <p style={{ fontSize: '1.1rem', color: '#333' }}>
           Finding conversation ideas that match your interests…
+        </p>
+        <p style={{ fondSize: '0.95rem', color: '#666', marginTop: '0.5rem'}}>
+          This may take a moment...
         </p>
       </div>
     )

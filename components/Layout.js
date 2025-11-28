@@ -4,6 +4,7 @@ import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/router'
 import { LogOut } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import useProfile from '../hooks/useProfile'
 
 export default function Layout({ children }) {
   const supabase = useSupabaseClient()
@@ -12,28 +13,8 @@ export default function Layout({ children }) {
 
   const isLoginPage = router.pathname === '/'
 
-  // Load the volunteer's profile
-  const [profile, setProfile] = useState(null)
-  const [loadingProfile, setLoadingProfile] = useState(true)
-
-  useEffect(() => {
-    if (!user) {
-      setLoadingProfile(false)
-      return
-    }
-
-    // ✅ Query the new table
-    supabase
-      .from('private_volunteer_profiles')
-      .select('*')
-      .eq('user_id', user.id)
-      .single()
-      .then(({ data, error }) => {
-        if (error) console.error('Error fetching volunteer profile:', error)
-        else setProfile(data)
-      })
-      .finally(() => setLoadingProfile(false))
-  }, [user, supabase])
+  // Use centralized profile hook
+  const { profile, loading: loadingProfile } = useProfile()
 
   async function handleLogout() {
     await supabase.auth.signOut()
@@ -73,10 +54,7 @@ export default function Layout({ children }) {
               </Link>
 
               {/* ✅ Always show Timesheet for volunteers */}
-              <Link
-                href="/volunteer/timesheet"
-                style={{ marginRight: '1rem', color: 'white' }}
-              >
+              <Link href="/timesheet" style={{ marginRight: '1rem', color: 'white' }}>
                 Timesheet
               </Link>
             </nav>

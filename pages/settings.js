@@ -52,19 +52,16 @@ export default function SettingsPage() {
         setStatusMsg('Saving...')
 
         try {
-            const { data, error } = await supabase.functions.invoke('update_email_preferences', {
-                body: { email_preferences: emailPreferences },
-            })
-
-            if (error) {
-                console.error('Edge Function error:', error)
+            const { data } = await invokeFunction(supabase, 'update_email_preferences', { body: { email_preferences: emailPreferences } })
+            if (data?.error) {
+                console.error('Edge Function returned error:', data)
                 setStatusMsg('❌ Failed to save preferences.')
             } else {
                 setStatusMsg('✅ Preferences saved successfully.')
             }
         } catch (err) {
-            console.error('Unexpected error:', err)
-            setStatusMsg('❌ Unexpected error.')
+            console.error('Edge Function error:', err)
+            setStatusMsg('❌ Failed to save preferences.')
         } finally {
             setSaving(false)
             setTimeout(() => setStatusMsg(''), 3000)

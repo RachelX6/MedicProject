@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/router'
+import { invokeFunction } from '../lib/supabaseFunctions'
 import LoadingOverlay from '../components/LoadingOverlay'
 
 export default function ViewMatch() {
@@ -22,10 +23,11 @@ export default function ViewMatch() {
     const fetchData = async () => {
       setLoading(true)
 
-      const [{ data: roleData, error: roleError }, { data: matchData, error: matchError }] = await Promise.all([
+      const [{ data: roleData, error: roleError }, matchResp] = await Promise.all([
         supabase.from('personal_profiles_view').select('user_role').eq('email', user.email).single(),
-        supabase.functions.invoke('get_match_data', { method: 'GET' })
+        invokeFunction(supabase, 'get_match_data', { method: 'GET', requireAuth: true }),
       ])
+      const matchData = matchResp.data
 
       if (roleError) {
         setError('Failed to get role info.')
@@ -34,8 +36,8 @@ export default function ViewMatch() {
       }
       setUserRole(roleData.user_role)
 
-      if (matchError) {
-        setError(matchError.message || 'Failed to load matches.')
+      if (!matchData) {
+        setError('Failed to load matches.')
       } else {
         setMatchData(matchData)
       }

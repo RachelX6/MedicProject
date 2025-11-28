@@ -1,55 +1,35 @@
+'use client'
+
 import { useEffect, useState } from "react";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
-import LoadingOverlay from '../components/LoadingOverlay'
+import { invokeFunction } from '../lib/supabaseFunctions'
+import LoadingOverlay from '../components/LoadingOverlay';
 
 export default function Timesheet() {
     const supabase = useSupabaseClient();
     const user = useUser();
 
-    const [profile, setProfile] = useState(null);
     const [reservations, setReservations] = useState([]);
     const [totalHours, setTotalHours] = useState(null);
     const [descriptions, setDescriptions] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Load user's profile
+    // Load volunteer reservations + hours
     useEffect(() => {
         if (!user) return;
-        (async () => {
-            const { data, error } = await supabase
-                .from("personal_profiles_view")
-                .select("user_role")
-                .eq("email", user.email)
-                .single();
-            if (error) console.error("Error fetching profile:", error);
-            else setProfile(data);
-        })();
-    }, [user, supabase]);
 
-    // Fetch reservations & total hours for volunteers
-    useEffect(() => {
-        if (!user || profile === null) return;
-
-        if (profile.user_role !== "volunteer") {
-            setLoading(false);
-            return;
-        }
-
-        const fetchData = async () => {
+        const load = async () => {
             setLoading(true);
             try {
-                // Fetch reservations
-                const { data: resData, error: resErr } = await supabase.functions.invoke(
-                    "view_reservations",
-                    { body: { status: "pending" } }
-                );
-                if (resErr) throw resErr;
-                if (!resData?.reservations) throw new Error("No reservations array in response");
+                // Fetch volunteer's reservations using helper
+                const { data: resData } = await invokeFunction(supabase, 'view_reservations', { body: { status: 'pending' } })
+                if (!resData?.reservations) throw new Error('No reservations returned')
 
-                // Only keep past or today
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
+
+                // past or today only
                 const filtered = resData.reservations.filter((r) => {
                     const d = new Date(r.date);
                     d.setHours(0, 0, 0, 0);
@@ -58,49 +38,39 @@ export default function Timesheet() {
 
                 setReservations(filtered);
 
-                // Fetch total hours
-                const { data: { session } } = await supabase.auth.getSession();
-                const accessToken = session?.access_token;
-                const hoursRes = await fetch(
-                    `${supabase.supabaseUrl}/functions/v1/get_total_hours`,
-                    { method: "GET", headers: { Authorization: `Bearer ${accessToken}` } }
-                );
-                if (!hoursRes.ok) {
-                    const errJson = await hoursRes.json();
-                    throw new Error(errJson.error || "Failed to fetch total hours");
-                }
-                const { total_hours } = await hoursRes.json();
+                // Load total hours
+                // Use helper which will attach user's token when available
+                const { data: { total_hours } = {} } = await invokeFunction(supabase, 'get_total_hours', { method: 'GET', requireAuth: true })
                 setTotalHours(total_hours ?? 0);
+
             } catch (err) {
-                console.error("Error loading timesheet data:", err);
+                console.error("Timesheet error:", err);
                 setError(err.message);
             } finally {
                 setLoading(false);
             }
         };
 
-        fetchData();
-    }, [user, profile, supabase]);
+        load();
+    }, [user, supabase]);
 
-    // Access guards
-    if (!user || profile === null || loading) return <LoadingOverlay message="Loading your profile data" />;
-    if (profile.user_role !== "volunteer") {
-        return (
-            <div style={{ textAlign: "center", margin: "3rem auto", maxWidth: "400px" }}>
-                <p style={{ color: "crimson", fontSize: "1.2rem", fontWeight: "bold" }}>🚫 Access Denied</p>
-                <p>This page is only available to volunteers.</p>
-            </div>
-        );
-    }
-    if (error) return <p style={{ color: "crimson" }}>Error: {error}</p>;
+    // Loading screen
+    if (!user || loading)
+        return <LoadingOverlay message="Loading your timesheet data..." />;
+
+    if (error)
+        return <p style={{ color: "crimson" }}>Error: {error}</p>;
 
     // Handlers
-    const handleChange = (id, value) => setDescriptions(prev => ({ ...prev, [id]: value }));
+    const handleDescriptionChange = (id, value) => {
+        setDescriptions(prev => ({ ...prev, [id]: value }));
+    };
+
     const handleSubmit = async (id) => {
         try {
-            const { error } = await supabase.functions.invoke("update_reservations", {
-                body: { action: "complete", reservation_id: id, description: descriptions[id] || "" },
-            });
+            const { data } = await invokeFunction(supabase, 'update_reservations', { body: { action: 'complete', reservation_id: id, description: descriptions[id] || '' } })
+            const error = data?.error
+
             if (error) throw error;
             alert("Session marked as complete!");
         } catch (err) {
@@ -108,20 +78,19 @@ export default function Timesheet() {
             alert("Error submitting timesheet.");
         }
     };
+
     const handleCancel = async (id) => {
         try {
-            const { error } = await supabase.functions.invoke("update_reservations", {
-                body: { action: "cancel", reservation_id: id },
-            });
-            if (error) throw error;
-            alert("Session canceled.");
+            const { data } = await invokeFunction(supabase, 'update_reservations', { body: { action: 'cancel', reservation_id: id } })
+            const error = data?.error
+            if (error) throw error
+            alert('Session canceled.')
         } catch (err) {
-            console.error("Cancel error:", err);
-            alert("Error canceling session.");
+            console.error('Cancel error:', err)
+            alert('Error canceling session.')
         }
     };
 
-    // Render
     return (
         <div style={{ padding: "2rem", maxWidth: "700px", margin: "0 auto" }}>
             <h1 style={{ color: "#8d171b", fontSize: "2rem", marginBottom: "1rem" }}>Timesheet</h1>
@@ -151,11 +120,15 @@ export default function Timesheet() {
                         borderRadius: "8px",
                         boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
                     }}>
-                        <p><strong>Date:</strong> {new Date(r.date).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" })}</p>
+                        <p><strong>Date:</strong> {new Date(r.date).toLocaleString("en-CA", {
+                            dateStyle: "medium",
+                            timeStyle: "short"
+                        })}</p>
+
                         <textarea
-                            placeholder="What did you do during this session?"
+                            placeholder="Describe your session..."
                             value={descriptions[r.id] || ""}
-                            onChange={e => handleChange(r.id, e.target.value)}
+                            onChange={e => handleDescriptionChange(r.id, e.target.value)}
                             style={{
                                 width: "100%",
                                 minHeight: "80px",
@@ -166,9 +139,15 @@ export default function Timesheet() {
                                 border: "1px solid #ccc",
                             }}
                         />
+
                         <div style={{ display: "flex", gap: "1rem" }}>
                             <button onClick={() => handleSubmit(r.id)}>Submit</button>
-                            <button onClick={() => handleCancel(r.id)} style={{ backgroundColor: "gray" }}>Cancel</button>
+                            <button
+                                onClick={() => handleCancel(r.id)}
+                                style={{ backgroundColor: "gray" }}
+                            >
+                                Cancel
+                            </button>
                         </div>
                     </div>
                 ))
@@ -177,7 +156,7 @@ export default function Timesheet() {
             <div style={{ textAlign: "center", marginTop: "1rem" }}>
                 <button
                     type="button"
-                    onClick={() => window.location.href = "/"}
+                    onClick={() => window.location.href = "/profile"}
                     style={{
                         backgroundColor: "#8d171b",
                         color: "#fff",
