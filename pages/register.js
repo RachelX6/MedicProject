@@ -4,7 +4,6 @@ import { useRouter } from 'next/router'
 import LoadingOverlay from '../components/LoadingOverlay'
 import { invokeFunction } from '../lib/supabaseFunctions'
 
-
 export default function Register() {
   const supabase = useSupabaseClient()
   const user = useUser()
@@ -15,7 +14,6 @@ export default function Register() {
     preferred_name: '',
     last_name: '',
     phone_number: '',
-    gender: '',
     birthday: '',
     senior_home: '',
     email: ''
@@ -55,7 +53,6 @@ export default function Register() {
       setLoading(true)
 
       // ✅ Call your Edge Function instead of direct insert
-      // Call helper which uses client SDK when appropriate
       try {
         const { data } = await invokeFunction(supabase, 'register_new_user', {
           body: {
@@ -65,7 +62,6 @@ export default function Register() {
               last_name: form.last_name,
               phone_number: form.phone_number,
               email: form.email,
-              gender: form.gender,
               date_of_birth: form.birthday,
               // Backend receives key values (casa_mia, pinegrove, point_grey)
               senior_home: form.senior_home,
@@ -164,22 +160,6 @@ export default function Register() {
           />
         </div>
 
-        {/* Gender */}
-        <div className="form-group">
-          <label htmlFor="gender">Gender</label>
-          <select
-            id="gender"
-            name="gender"
-            value={form.gender}
-            onChange={handleChange}
-          >
-            <option value="">Select</option>
-            <option value="male">Male</option>
-            <option value="female">Female</option>
-            <option value="other">Other</option>
-          </select>
-        </div>
-
         {/* Birthday */}
         <div className="form-group">
           <label htmlFor="birthday">Birthday</label>
@@ -211,7 +191,6 @@ export default function Register() {
         <button type="submit" className="submit-btn">Complete Registration</button>
       </form>
 
-      {/* ✅ Your original styling */}
       <style jsx>{`
         .form-container {
           max-width: 400px;

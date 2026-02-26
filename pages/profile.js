@@ -42,16 +42,13 @@ export default function ProfilePage() {
           .single()
         if (privateError && privateError.code !== 'PGRST116') throw privateError
 
-        // Combine the correct fields
+        // Combine fields (birthday removed)
         setProfile({
           first_name: publicData?.first_name || null,
           last_name: publicData?.last_name || null,
-
           preferred_name: privateData?.preferred_name || null,
           email: privateData?.email || null,
           phone_number: privateData?.phone_number || null,
-          gender: privateData?.gender || null,
-          birthday: privateData?.birthday || null,
           senior_home: publicData?.senior_home || null
         })
       } catch (err) {
@@ -73,14 +70,11 @@ export default function ProfilePage() {
 
   // Simple checklist
   const todos = []
-  if (!profile?.gender) todos.push('Add your gender')
-  if (!profile?.birthday) todos.push('Add your birthday')
   if (!profile?.phone_number) todos.push('Add your phone number')
   if (!profile?.senior_home) todos.push('Select your senior home')
 
   return (
     <div className="profile-container">
-
       {/* Header */}
       <header className="profile-header">
         <h1>Welcome, {profile?.preferred_name || 'Volunteer'}!</h1>
@@ -101,8 +95,6 @@ export default function ProfilePage() {
         <p><strong>Last Name:</strong> {profile?.last_name || '—'}</p>
         <p><strong>Email:</strong> {profile?.email || '—'}</p>
         <p><strong>Phone:</strong> {profile?.phone_number || '—'}</p>
-        <p><strong>Gender:</strong> {profile?.gender || '—'}</p>
-        <p><strong>Birthday:</strong> {profile?.birthday || '—'}</p>
         <p><strong>Senior Home:</strong> {formatHome(profile?.senior_home)}</p>
       </section>
 
@@ -249,10 +241,6 @@ export default function ProfilePage() {
         .senior-home-btn:hover {
           background-color: #6f1317;
           border-color: #6f1317;
-        }
-
-        .logout-btn:hover {
-          background-color: #6f1317;
         }
       `}</style>
     </div>

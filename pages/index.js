@@ -99,8 +99,8 @@ export default function LoginPage() {
           </div>
           <div className="feature-card slide-up delay-3">
             <div className="feature-icon">📊</div>
-            <h3>Track Your Impact</h3>
-            <p>See the difference you're making with detailed activity logs and feedback.</p>
+            <h3>Track Your Hours</h3>
+            <p>Keep a record of your volunteer sessions and see the time you have dedicated to supporting seniors.</p>
           </div>
         </div>
 
