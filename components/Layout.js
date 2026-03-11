@@ -79,6 +79,37 @@ export default function Layout({ children }) {
               >
                 Timesheet
               </Link>
+
+              <Link
+                href="/genericComments"
+                style={{
+                  color: 'white',
+                  textDecoration: 'none',
+                  fontWeight: '500',
+                  transition: 'opacity 0.2s',
+                  opacity: router.pathname === '/genericComments' ? 1 : 0.9
+                }}
+              >
+                Comments
+              </Link>
+
+              {profile?.role === 'coordinator' && (
+                <Link
+                  href="/coordinator"
+                  style={{
+                    color: 'white',
+                    textDecoration: 'none',
+                    fontWeight: '500',
+                    transition: 'opacity 0.2s',
+                    opacity: router.pathname === '/coordinator' ? 1 : 0.9,
+                    backgroundColor: 'rgba(255,255,255,0.15)',
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '4px',
+                  }}
+                >
+                  Dashboard
+                </Link>
+              )}
             </nav>
           )}
 

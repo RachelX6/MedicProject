@@ -32,6 +32,7 @@ export default function useProfile() {
           gender: privateData?.gender || null,
           birthday: privateData?.birthday || null,
           senior_home: publicData?.senior_home || null,
+          role: publicData?.role || 'volunteer',
           // keep raw sources if needed
           _public: publicData || null,
           _private: privateData || null,

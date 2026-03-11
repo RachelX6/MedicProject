@@ -32,6 +32,12 @@ export const config = {
     "/questionnaire",
     "/interestsQuestionnaire",
     "/my-answers",
+    "/genericComments",
+    "/seniorComments",
+    "/addSenior",
+    "/timesheet",
+    "/coordinator",
+    "/coordinator/:path*",
     // You can also protect entire folders:
     // "/dashboard/:path*",
   ],

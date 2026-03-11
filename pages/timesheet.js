@@ -2,16 +2,38 @@ import { useEffect, useState } from "react";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { invokeFunction } from '../lib/supabaseFunctions'
 import LoadingOverlay from '../components/LoadingOverlay';
+import useProfile from '../hooks/useProfile';
 
 export default function Timesheet() {
     const supabase = useSupabaseClient();
     const user = useUser();
+    const { profile } = useProfile();
 
     const [reservations, setReservations] = useState([]);
     const [totalHours, setTotalHours] = useState(null);
     const [descriptions, setDescriptions] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    // Manual entry state
+    const [showManualForm, setShowManualForm] = useState(false);
+    const [manualDuration, setManualDuration] = useState("60");
+    const [manualDate, setManualDate] = useState(new Date().toISOString().split("T")[0]);
+    const [manualTime, setManualTime] = useState("10:00");
+    const [manualSenior, setManualSenior] = useState("");
+    const [manualComment, setManualComment] = useState("");
+    const [seniors, setSeniors] = useState([]);
+    const [submittingManual, setSubmittingManual] = useState(false);
+
+    const durationOptions = [
+        { value: "0", label: "0 min" },
+        { value: "30", label: "30 min" },
+        { value: "60", label: "1 hr" },
+        { value: "90", label: "1.5 hrs" },
+        { value: "120", label: "2 hrs" },
+        { value: "150", label: "2.5 hrs" },
+        { value: "180", label: "3 hrs" },
+    ];
 
     // Load volunteer reservations + hours
     useEffect(() => {
@@ -56,6 +78,22 @@ export default function Timesheet() {
         load();
     }, [user, supabase]);
 
+    // Load seniors for manual entry dropdown
+    useEffect(() => {
+        if (!user || !profile?.senior_home) return;
+
+        const loadSeniors = async () => {
+            const { data, error } = await supabase
+                .from("senior_profiles")
+                .select("senior_id, public_senior_id")
+                .eq("senior_home", profile.senior_home);
+
+            if (!error && data) setSeniors(data);
+        };
+
+        loadSeniors();
+    }, [user, profile, supabase]);
+
     // Loading screen
     if (!user || loading)
         return <LoadingOverlay message="Loading your timesheet data..." />;
@@ -93,6 +131,40 @@ export default function Timesheet() {
         }
     };
 
+    const handleManualSubmit = async (e) => {
+        e.preventDefault();
+        setSubmittingManual(true);
+
+        try {
+            const dateTime = new Date(`${manualDate}T${manualTime}:00`).toISOString();
+
+            const { data } = await invokeFunction(supabase, 'add_manual_timesheet', {
+                requireAuth: true,
+                body: {
+                    senior_id: manualSenior || null,
+                    date: dateTime,
+                    duration: parseInt(manualDuration),
+                    comment: manualComment || null,
+                }
+            });
+
+            if (data?.error) throw new Error(data.error);
+
+            alert("Timesheet entry added successfully!");
+            setManualComment("");
+            setManualSenior("");
+            setShowManualForm(false);
+
+            // Reload the page to refresh data
+            window.location.reload();
+        } catch (err) {
+            console.error("Manual submit error:", err);
+            alert("Error adding timesheet entry: " + (err.message || String(err)));
+        } finally {
+            setSubmittingManual(false);
+        }
+    };
+
     return (
         <div style={{
             maxWidth: "750px",
@@ -123,6 +195,208 @@ export default function Timesheet() {
                 </div>
             )}
 
+            {/* Manual Entry Toggle */}
+            <div style={{ marginBottom: "2rem" }}>
+                <button
+                    onClick={() => setShowManualForm(!showManualForm)}
+                    style={{
+                        backgroundColor: showManualForm ? "#6c757d" : "#8d171b",
+                        color: "white",
+                        padding: "0.75rem 1.5rem",
+                        border: "none",
+                        borderRadius: "8px",
+                        fontWeight: "bold",
+                        cursor: "pointer",
+                        transition: "all 0.2s",
+                        fontSize: "1rem",
+                        width: "100%",
+                    }}
+                >
+                    {showManualForm ? "✕ Cancel Manual Entry" : "＋ Add Manual Timesheet Entry"}
+                </button>
+            </div>
+
+            {/* Manual Entry Form */}
+            {showManualForm && (
+                <form onSubmit={handleManualSubmit} style={{
+                    marginBottom: "2.5rem",
+                    padding: "1.5rem",
+                    backgroundColor: "#f8f9fa",
+                    borderRadius: "10px",
+                    border: "2px solid #8d171b20",
+                }}>
+                    <h3 style={{
+                        color: "#8d171b",
+                        marginBottom: "1.25rem",
+                        fontSize: "1.2rem",
+                    }}>Manual Timesheet Entry</h3>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1rem" }}>
+                        {/* Duration */}
+                        <div>
+                            <label style={{
+                                fontWeight: "bold",
+                                color: "#171717",
+                                display: "block",
+                                marginBottom: "0.3rem",
+                                fontSize: "0.9rem",
+                            }}>Duration *</label>
+                            <select
+                                value={manualDuration}
+                                onChange={(e) => setManualDuration(e.target.value)}
+                                required
+                                style={{
+                                    width: "100%",
+                                    padding: "0.6rem",
+                                    borderRadius: "8px",
+                                    border: "1px solid #e0e0e0",
+                                    fontSize: "1rem",
+                                    color: "#171717",
+                                    backgroundColor: "#ffffff",
+                                }}
+                            >
+                                {durationOptions.map(opt => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Senior */}
+                        <div>
+                            <label style={{
+                                fontWeight: "bold",
+                                color: "#171717",
+                                display: "block",
+                                marginBottom: "0.3rem",
+                                fontSize: "0.9rem",
+                            }}>Senior (optional)</label>
+                            <select
+                                value={manualSenior}
+                                onChange={(e) => setManualSenior(e.target.value)}
+                                style={{
+                                    width: "100%",
+                                    padding: "0.6rem",
+                                    borderRadius: "8px",
+                                    border: "1px solid #e0e0e0",
+                                    fontSize: "1rem",
+                                    color: "#171717",
+                                    backgroundColor: "#ffffff",
+                                }}
+                            >
+                                <option value="">No specific senior</option>
+                                {seniors.map(s => (
+                                    <option key={s.senior_id} value={s.senior_id}>{s.public_senior_id}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        {/* Date */}
+                        <div>
+                            <label style={{
+                                fontWeight: "bold",
+                                color: "#171717",
+                                display: "block",
+                                marginBottom: "0.3rem",
+                                fontSize: "0.9rem",
+                            }}>Date *</label>
+                            <input
+                                type="date"
+                                value={manualDate}
+                                onChange={(e) => setManualDate(e.target.value)}
+                                required
+                                style={{
+                                    width: "100%",
+                                    padding: "0.6rem",
+                                    borderRadius: "8px",
+                                    border: "1px solid #e0e0e0",
+                                    fontSize: "1rem",
+                                    color: "#171717",
+                                    backgroundColor: "#ffffff",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+                        </div>
+
+                        {/* Time */}
+                        <div>
+                            <label style={{
+                                fontWeight: "bold",
+                                color: "#171717",
+                                display: "block",
+                                marginBottom: "0.3rem",
+                                fontSize: "0.9rem",
+                            }}>Time *</label>
+                            <input
+                                type="time"
+                                value={manualTime}
+                                onChange={(e) => setManualTime(e.target.value)}
+                                required
+                                style={{
+                                    width: "100%",
+                                    padding: "0.6rem",
+                                    borderRadius: "8px",
+                                    border: "1px solid #e0e0e0",
+                                    fontSize: "1rem",
+                                    color: "#171717",
+                                    backgroundColor: "#ffffff",
+                                    boxSizing: "border-box",
+                                }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Comment */}
+                    <div style={{ marginBottom: "1.25rem" }}>
+                        <label style={{
+                            fontWeight: "bold",
+                            color: "#171717",
+                            display: "block",
+                            marginBottom: "0.3rem",
+                            fontSize: "0.9rem",
+                        }}>Comment (optional)</label>
+                        <textarea
+                            placeholder="Describe your session..."
+                            value={manualComment}
+                            onChange={(e) => setManualComment(e.target.value)}
+                            style={{
+                                width: "100%",
+                                minHeight: "80px",
+                                padding: "0.6rem",
+                                borderRadius: "8px",
+                                border: "1px solid #e0e0e0",
+                                fontSize: "1rem",
+                                fontFamily: "inherit",
+                                resize: "vertical",
+                                color: "#171717",
+                                backgroundColor: "#ffffff",
+                                boxSizing: "border-box",
+                            }}
+                        />
+                    </div>
+
+                    <button
+                        type="submit"
+                        disabled={submittingManual}
+                        style={{
+                            width: "100%",
+                            backgroundColor: "#27ae60",
+                            color: "white",
+                            padding: "0.75rem",
+                            border: "none",
+                            borderRadius: "8px",
+                            fontWeight: "bold",
+                            fontSize: "1rem",
+                            cursor: submittingManual ? "not-allowed" : "pointer",
+                            transition: "all 0.2s",
+                            opacity: submittingManual ? 0.6 : 1,
+                        }}
+                    >
+                        {submittingManual ? "Submitting..." : "✓ Submit Timesheet Entry"}
+                    </button>
+                </form>
+            )}
+
+            {/* Existing Reservations */}
             {reservations.length === 0 ? (
                 <p style={{ color: "#666", textAlign: "center" }}>No past or today's reservations to log.</p>
             ) : (

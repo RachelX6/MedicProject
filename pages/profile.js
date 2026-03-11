@@ -115,6 +115,14 @@ export default function ProfilePage() {
       {/* Quick Links */}
       <section className="profile-actions">
         <h2>Quick Links</h2>
+        {profile?.role === 'coordinator' && (
+          <button
+            onClick={() => router.push('/coordinator')}
+            className="main-btn coordinator-btn"
+          >
+            🏥 Coordinator Dashboard
+          </button>
+        )}
         {profile?.senior_home && (
           <button
             onClick={() => router.push(`/senior-home/${profile.senior_home}`)}
@@ -129,8 +137,14 @@ export default function ProfilePage() {
         <button onClick={() => router.push('/timesheet')} className="main-btn">
           🕑 Timesheet
         </button>
+        <button onClick={() => router.push('/genericComments')} className="main-btn">
+          💬 General Comments
+        </button>
         <button onClick={() => router.push('/seniorComments')} className="main-btn">
           📝 Senior Comments
+        </button>
+        <button onClick={() => router.push('/addSenior')} className="main-btn">
+          👴 Add Senior
         </button>
       </section>
 
@@ -240,6 +254,18 @@ export default function ProfilePage() {
 
         .senior-home-btn:hover {
           background-color: #6f1317;
+          border-color: #6f1317;
+        }
+
+        .coordinator-btn {
+          background: linear-gradient(135deg, #8d171b 0%, #b91d24 100%);
+          color: white;
+          border: 2px solid #8d171b;
+          font-weight: 600;
+        }
+
+        .coordinator-btn:hover {
+          background: linear-gradient(135deg, #6f1317 0%, #8d171b 100%);
           border-color: #6f1317;
         }
       `}</style>

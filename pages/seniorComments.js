@@ -13,6 +13,8 @@ export default function SeniorComments() {
     const [filteredSeniors, setFilteredSeniors] = useState([]);
     const [selectedSenior, setSelectedSenior] = useState(null);
     const [comments, setComments] = useState([]);
+    const [newComment, setNewComment] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
     // Load all seniors
     useEffect(() => {
@@ -46,23 +48,82 @@ export default function SeniorComments() {
         setSelectedSenior(null); // Reset senior selection when home changes
     }, [selectedHome, seniors]);
 
-    // Load comments for selected senior FROM RESERVATIONS
+    // Load comments for selected senior (from BOTH reservations AND senior_comments table)
     useEffect(() => {
         if (!selectedSenior) return;
 
         const loadComments = async () => {
-            const { data, error } = await supabase
+            // Load from reservations (legacy)
+            const { data: reservationComments } = await supabase
                 .from("reservations")
                 .select("comment, created_at, volunteer_id")
                 .eq("senior_id", selectedSenior)
-                .not("comment", "is", null)   // ONLY rows with comments
+                .not("comment", "is", null)
                 .order("created_at", { ascending: false });
 
-            if (!error) setComments(data);
+            // Load from senior_comments table (new)
+            const { data: seniorCommentData } = await supabase
+                .from("senior_comments")
+                .select("comment, created_at, volunteer_id")
+                .eq("senior_id", selectedSenior)
+                .order("created_at", { ascending: false });
+
+            // Merge and sort by date (newest first)
+            const allComments = [
+                ...(reservationComments || []).map(c => ({ ...c, source: "reservation" })),
+                ...(seniorCommentData || []).map(c => ({ ...c, source: "comment" })),
+            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            setComments(allComments);
         };
 
         loadComments();
     }, [selectedSenior, supabase]);
+
+    // Submit a new senior comment
+    const handleSubmitComment = async (e) => {
+        e.preventDefault();
+        if (!newComment.trim() || !selectedSenior || !user) return;
+
+        setSubmitting(true);
+
+        const selectedSeniorObj = filteredSeniors.find(s => s.senior_id === selectedSenior);
+
+        const { error } = await supabase.from("senior_comments").insert({
+            volunteer_id: user.id,
+            senior_id: selectedSenior,
+            senior_home: selectedSeniorObj?.senior_home || selectedHome,
+            comment: newComment.trim(),
+        });
+
+        if (error) {
+            alert("Error posting comment: " + error.message);
+        } else {
+            setNewComment("");
+            // Reload comments
+            const { data: reservationComments } = await supabase
+                .from("reservations")
+                .select("comment, created_at, volunteer_id")
+                .eq("senior_id", selectedSenior)
+                .not("comment", "is", null)
+                .order("created_at", { ascending: false });
+
+            const { data: seniorCommentData } = await supabase
+                .from("senior_comments")
+                .select("comment, created_at, volunteer_id")
+                .eq("senior_id", selectedSenior)
+                .order("created_at", { ascending: false });
+
+            const allComments = [
+                ...(reservationComments || []).map(c => ({ ...c, source: "reservation" })),
+                ...(seniorCommentData || []).map(c => ({ ...c, source: "comment" })),
+            ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+            setComments(allComments);
+        }
+
+        setSubmitting(false);
+    };
 
     if (!user || loading) {
         return <LoadingOverlay message="Loading senior comments..." />;
@@ -162,7 +223,7 @@ export default function SeniorComments() {
                 </div>
             )}
 
-            {/* Comments Display */}
+            {/* Write Comment Form + Comments Display */}
             {selectedSenior && (
                 <div>
                     <h2 style={{
@@ -174,6 +235,62 @@ export default function SeniorComments() {
                         {filteredSeniors.find((s) => s.senior_id === selectedSenior)?.public_senior_id}
                     </h2>
 
+                    {/* Write Comment Form */}
+                    <form onSubmit={handleSubmitComment} style={{
+                        marginBottom: "2rem",
+                        padding: "1.25rem",
+                        backgroundColor: "#f8f9fa",
+                        borderRadius: "8px",
+                        border: "1px solid #e0e0e0",
+                    }}>
+                        <label style={{
+                            fontWeight: "bold",
+                            color: "#171717",
+                            display: "block",
+                            marginBottom: "0.5rem",
+                        }}>Write a Comment</label>
+
+                        <textarea
+                            placeholder="Share your observations about this senior..."
+                            value={newComment}
+                            onChange={(e) => setNewComment(e.target.value)}
+                            required
+                            style={{
+                                width: "100%",
+                                minHeight: "80px",
+                                padding: "0.75rem",
+                                borderRadius: "8px",
+                                border: "1px solid #e0e0e0",
+                                fontSize: "1rem",
+                                fontFamily: "inherit",
+                                resize: "vertical",
+                                color: "#171717",
+                                backgroundColor: "#ffffff",
+                                marginBottom: "0.75rem",
+                                boxSizing: "border-box",
+                            }}
+                        />
+
+                        <button
+                            type="submit"
+                            disabled={submitting || !newComment.trim()}
+                            style={{
+                                backgroundColor: "#8d171b",
+                                color: "white",
+                                padding: "0.6rem 1.5rem",
+                                border: "none",
+                                borderRadius: "8px",
+                                fontWeight: "bold",
+                                cursor: submitting ? "not-allowed" : "pointer",
+                                transition: "all 0.2s",
+                                opacity: submitting ? 0.6 : 1,
+                            }}
+                        >
+                            {submitting ? "Posting..." : "Post Comment"}
+                        </button>
+                    </form>
+
+                    {/* Comments List */}
                     {comments.length === 0 ? (
                         <p style={{ color: "#666" }}>No comments yet for this senior.</p>
                     ) : (
@@ -194,9 +311,24 @@ export default function SeniorComments() {
                                     margin: "0 0 0.5rem 0",
                                     lineHeight: "1.6"
                                 }}>{c.comment}</p>
-                                <small style={{ color: "#666" }}>
-                                    {new Date(c.created_at).toLocaleDateString("en-CA")}
-                                </small>
+                                <div style={{
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                }}>
+                                    <small style={{ color: "#666" }}>
+                                        {new Date(c.created_at).toLocaleDateString("en-CA")}
+                                    </small>
+                                    {c.source === "reservation" && (
+                                        <small style={{
+                                            color: "#888",
+                                            fontSize: "0.75rem",
+                                            padding: "0.15rem 0.5rem",
+                                            backgroundColor: "#f0f0f0",
+                                            borderRadius: "10px",
+                                        }}>from visit</small>
+                                    )}
+                                </div>
                             </div>
                         ))
                     )}
