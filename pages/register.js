@@ -14,7 +14,6 @@ export default function Register() {
     preferred_name: '',
     last_name: '',
     phone_number: '',
-    birthday: '',
     senior_home: '',
     email: ''
   })
@@ -62,8 +61,6 @@ export default function Register() {
               last_name: form.last_name,
               phone_number: form.phone_number,
               email: form.email,
-              date_of_birth: form.birthday,
-              // Backend receives key values (casa_mia, pinegrove, point_grey)
               senior_home: form.senior_home,
             },
           },
@@ -157,18 +154,6 @@ export default function Register() {
             onKeyPress={(e) => {
               if (!/[0-9]/.test(e.key)) e.preventDefault()
             }}
-          />
-        </div>
-
-        {/* Birthday */}
-        <div className="form-group">
-          <label htmlFor="birthday">Birthday</label>
-          <input
-            type="date"
-            id="birthday"
-            name="birthday"
-            value={form.birthday}
-            onChange={handleChange}
           />
         </div>
 
