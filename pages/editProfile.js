@@ -2,7 +2,12 @@ import { useState, useEffect } from 'react'
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/router'
 import useProfile from '../hooks/useProfile'
-import { invokeFunction } from '@/lib/supabaseFunctions'
+
+const SENIOR_HOME_OPTIONS = [
+  { value: 'casa_mia', label: 'Casa Mia' },
+  { value: 'pinegrove', label: 'Pinegrove Place' },
+  { value: 'point_grey', label: 'Point Grey Hospital' }
+]
 
 export default function EditProfile() {
   const supabase = useSupabaseClient()
@@ -19,7 +24,9 @@ export default function EditProfile() {
     email: ''
   })
 
-  // Prefill form when profile data loads
+  const [validationError, setValidationError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
   useEffect(() => {
     if (profile) {
       setForm({
@@ -34,6 +41,7 @@ export default function EditProfile() {
   }, [profile])
 
   const handleChange = (e) => {
+    setValidationError('')
     const { name, value } = e.target
     setForm(prev => ({ ...prev, [name]: value }))
   }
@@ -42,19 +50,44 @@ export default function EditProfile() {
     e.preventDefault()
     if (!user) return
 
-    try {
-      const payload = {
-        first_name: form.first_name,
-        preferred_name: form.preferred_name,
-        last_name: form.last_name,
-        phone_number: form.phone_number,
-        senior_home: form.senior_home,
-        email: form.email,
-      }
+    setValidationError('')
+    setIsSubmitting(true)
 
-      // Call Edge Function (recommended path if you want one “source of truth”)
+    // ─── MANDATORY CHECK ──────────────────────────────────────────────
+    // Check if any field is empty or just whitespace
+    const isAnyFieldEmpty = Object.values(form).some(value => !value || value.trim() === '')
+
+    if (isAnyFieldEmpty) {
+      setValidationError('Please fill in all fields.')
+      setIsSubmitting(false)
+      return
+    }
+
+    // ─── "ILLEGAL" DATA CHECK ─────────────────────────────────────────
+    const phoneRegex = /^[0-9\- ]+$/
+    if (!phoneRegex.test(form.phone_number)) {
+      setValidationError('Illegal characters in phone number. Please use only numbers.')
+      setIsSubmitting(false)
+      return
+    }
+
+    if (!form.email.includes('@')) {
+      setValidationError('Please enter a valid email address.')
+      setIsSubmitting(false)
+      return
+    }
+
+    try {
+      const payload = {}
+      Object.keys(form).forEach(key => {
+        payload[key] = form[key].trim()
+      })
+
       const { data, error } = await supabase.functions.invoke('update_user_profile', {
-        body: {profileData: payload},
+        body: { profileData: payload },
+        headers: {
+          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+        }
       })
 
       if (error) throw error
@@ -63,17 +96,20 @@ export default function EditProfile() {
       router.push('/profile')
     } catch (error) {
       console.error('Update failed:', error)
-      alert('Failed to update profile: ' + (error?.message || 'Unknown error'))
+      setValidationError('Failed to update. Please check your connection.')
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
-  if (!user || loading) return <p>Loading...</p>
+  if (!user || loading) return <p style={{ textAlign: 'center', marginTop: '2rem' }}>Loading...</p>
 
-  const seniorHomes = [
-    'casa_mia',
-    'pinegrove',
-    'point_grey'
-  ]
+  // Helper to render label with red star
+  const RequiredLabel = ({ text, htmlFor }) => (
+    <label htmlFor={htmlFor} style={{ fontWeight: 'bold', display: 'block', marginBottom: '0.3rem' }}>
+      {text} <span style={{ color: '#8d171b' }}>*</span>
+    </label>
+  )
 
   return (
     <div style={{
@@ -88,12 +124,28 @@ export default function EditProfile() {
         Edit Profile
       </h1>
 
+      {validationError && (
+        <div style={{
+          backgroundColor: '#fee2e2',
+          color: '#b91c1c',
+          padding: '1rem',
+          borderRadius: '8px',
+          marginBottom: '1.5rem',
+          border: '1px solid #f87171',
+          textAlign: 'center',
+          fontWeight: 'bold'
+        }}>
+          {validationError}
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
         {['first_name', 'preferred_name', 'last_name', 'email', 'phone_number'].map((name) => (
           <div key={name} style={{ marginBottom: '1.5rem', color: 'black' }}>
-            <label htmlFor={name} style={{ fontWeight: 'bold' }}>
-              {name.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
-            </label><br />
+            <RequiredLabel
+              htmlFor={name}
+              text={name.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())}
+            />
             <input
               type={name === 'email' ? 'email' : 'text'}
               id={name}
@@ -104,18 +156,15 @@ export default function EditProfile() {
                 width: '100%',
                 padding: '0.6rem',
                 borderRadius: '6px',
-                border: '1px solid #ccc',
-                marginTop: '0.3rem',
+                border: validationError && (!form[name] || form[name].trim() === '') ? '2px solid #f87171' : '1px solid #ccc',
+                boxSizing: 'border-box'
               }}
             />
           </div>
         ))}
 
-        {/* Senior Home */}
         <div style={{ marginBottom: '2rem', color: 'black' }}>
-          <label htmlFor="senior_home" style={{ fontWeight: 'bold' }}>
-            Senior Home
-          </label><br />
+          <RequiredLabel htmlFor="senior_home" text="Senior Home" />
           <select
             id="senior_home"
             name="senior_home"
@@ -125,38 +174,39 @@ export default function EditProfile() {
               width: '100%',
               padding: '0.6rem',
               borderRadius: '6px',
-              border: '1px solid #ccc',
-              marginTop: '0.3rem',
+              border: validationError && !form.senior_home ? '2px solid #f87171' : '1px solid #ccc',
+              backgroundColor: 'white',
+              boxSizing: 'border-box'
             }}
           >
             <option value="">Select a senior home</option>
-            {seniorHomes.map(home => (
-              <option key={home} value={home}>{home}</option>
+            {SENIOR_HOME_OPTIONS.map(home => (
+              <option key={home.value} value={home.value}>{home.label}</option>
             ))}
           </select>
         </div>
 
-        {/* Buttons */}
         <div style={{ textAlign: 'center', marginTop: '2rem' }}>
           <button
             type="submit"
+            disabled={isSubmitting}
             style={{
-              backgroundColor: '#8d171b',
+              backgroundColor: isSubmitting ? '#a3a3a3' : '#8d171b',
               color: 'white',
               padding: '0.75rem 2rem',
               border: 'none',
               borderRadius: '8px',
               fontWeight: 'bold',
-              cursor: 'pointer',
+              cursor: isSubmitting ? 'not-allowed' : 'pointer',
               marginRight: '1rem',
             }}
           >
-            Save Changes
+            {isSubmitting ? 'Saving...' : 'Save Changes'}
           </button>
 
           <button
             type="button"
-            onClick={() => router.push('/')}
+            onClick={() => router.push('/profile')}
             style={{
               backgroundColor: '#ccc',
               color: '#333',
