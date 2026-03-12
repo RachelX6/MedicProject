@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/router'
 import useProfile from '../hooks/useProfile'
+import { invokeFunction } from '@/lib/supabaseFunctions'
 
 export default function EditProfile() {
   const supabase = useSupabaseClient()
@@ -69,14 +70,9 @@ export default function EditProfile() {
   if (!user || loading) return <p>Loading...</p>
 
   const seniorHomes = [
-    'Arbutus Care Center',
-    'Casa Mia',
-    'Opal by Element',
-    'Pinegrove Place',
-    'Point Grey Private Hospital',
-    'South Granville Lodge',
-    'Tapestry',
-    'Terrace on 7th'
+    'casa_mia',
+    'pinegrove',
+    'point_grey'
   ]
 
   return (
