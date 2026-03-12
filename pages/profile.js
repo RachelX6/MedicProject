@@ -42,7 +42,6 @@ export default function ProfilePage() {
           .single()
         if (privateError && privateError.code !== 'PGRST116') throw privateError
 
-        // Combine fields (birthday removed)
         setProfile({
           first_name: publicData?.first_name || null,
           last_name: publicData?.last_name || null,
