@@ -303,6 +303,7 @@ export default function Timesheet() {
                                 type="date"
                                 value={manualDate}
                                 onChange={(e) => setManualDate(e.target.value)}
+                                max={new Date().toISOString().split("T")[0]}
                                 required
                                 style={{
                                     width: "100%",

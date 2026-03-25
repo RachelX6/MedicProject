@@ -19,6 +19,7 @@ export default function GenericComments() {
         { value: "general", label: "💬 General" },
         { value: "suggestion", label: "💡 Suggestion" },
         { value: "concern", label: "⚠️ Concern" },
+        { value: "question", label: "❓ Question" },
     ];
 
     // Load all generic comments

@@ -103,5 +103,40 @@
         ],
         "screeningLink": "https://screening-link-placeholder.com/point-grey",
         "screeningInstructions": "All volunteers must complete a criminal background check before their first visit. Please allow 5-7 business days for processing. Click the button below to begin the screening process."
+    },
+    "seasons": {
+        "slug": "seasons",
+        "name": "Seasons",
+        "fullName": "Seasons Senior Living",
+        "tagline": "A vibrant and caring community",
+        "address": "3338 Wesbrook Mall, Vancouver, BC",
+        "color": "#9b59b6",
+        "introduction": "Welcome to Seasons Senior Living, a community focused on providing compassionate care and meaningful connections. As a MEDIC Foundation volunteer, your presence helps bring joy, companionship, and engagement to our residents.",
+        "checklist": [
+            "Complete volunteer orientation session",
+            "Review facility safety protocols and emergency procedures",
+            "Submit required screening documents",
+            "Familiarize yourself with resident activity preferences",
+            "Sign in at reception desk before each visit"
+        ],
+        "resources": [
+            {
+                "title": "Volunteer Handbook",
+                "description": "Essential guidelines and best practices for volunteers",
+                "url": "#volunteer-handbook"
+            },
+            {
+                "title": "Activity Ideas Guide",
+                "description": "Suggestions for engaging activities with residents",
+                "url": "#activity-guide"
+            },
+            {
+                "title": "Contact Information",
+                "description": "Key contacts and emergency numbers",
+                "url": "#contacts"
+            }
+        ],
+        "screeningLink": "https://screening-link-placeholder.com/seasons",
+        "screeningInstructions": "All volunteers must complete a criminal background check before their first visit. Please allow 5-7 business days for processing. Click the button below to begin the screening process."
     }
 }

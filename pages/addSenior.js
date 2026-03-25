@@ -96,7 +96,7 @@ export default function AddSenior() {
                 marginBottom: "0.5rem",
                 fontSize: "2rem",
             }}>
-                👴 Add Senior
+                Add Senior
             </h1>
             <p style={{ color: "#666", marginBottom: "2rem", lineHeight: "1.5" }}>
                 Add a senior to <strong style={{ color: "#171717" }}>{formatHome(profile.senior_home)}</strong>.

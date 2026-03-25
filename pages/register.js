@@ -170,6 +170,7 @@ export default function Register() {
             <option value="casa_mia">Casa Mia — 1920 SW Marine Dr, Vancouver, BC</option>
             <option value="pinegrove">Pinegrove Place — 11331 Mellis Dr, Richmond, BC</option>
             <option value="point_grey">Point Grey Private Hospital — 2423 Cornwall Ave, Vancouver, BC</option>
+            <option value="seasons">Seasons — 3338 Wesbrook Mall, Vancouver, BC</option>
           </select>
         </div>
 

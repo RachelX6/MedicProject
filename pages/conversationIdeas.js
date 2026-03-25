@@ -117,7 +117,7 @@ export default function ConversationIdeas() {
             </h2>
             <p style={{ color: '#171717', marginBottom: '0.5rem' }}><strong>Description:</strong></p>
             <ul style={{ paddingLeft: '1.5rem', marginBottom: '0', color: '#171717' }}>
-              {idea.description
+              {(idea.description || "Description unavailable.")
                 .split(/\d+\.\s/)
                 .filter((part) => part.trim() !== '')
                 .map((step, i) => (

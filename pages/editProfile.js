@@ -6,7 +6,8 @@ import useProfile from '../hooks/useProfile'
 const SENIOR_HOME_OPTIONS = [
   { value: 'casa_mia', label: 'Casa Mia' },
   { value: 'pinegrove', label: 'Pinegrove Place' },
-  { value: 'point_grey', label: 'Point Grey Hospital' }
+  { value: 'point_grey', label: 'Point Grey Hospital' },
+  { value: 'seasons', label: 'Seasons'}
 ]
 
 export default function EditProfile() {

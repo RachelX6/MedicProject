@@ -99,7 +99,7 @@ export default function ProfilePage() {
 
       {/* Overview */}
       <section className="overview">
-        <h2>📝 Overview / To-Do</h2>
+        <h2>Overview / To-Do</h2>
         {todos.length > 0 ? (
           <ul>
             {todos.map((item, index) => (
@@ -119,7 +119,7 @@ export default function ProfilePage() {
             onClick={() => router.push('/coordinator')}
             className="main-btn coordinator-btn"
           >
-            🏥 Coordinator Dashboard
+            Coordinator Dashboard
           </button>
         )}
         {profile?.senior_home && (
@@ -127,23 +127,23 @@ export default function ProfilePage() {
             onClick={() => router.push(`/senior-home/${profile.senior_home}`)}
             className="main-btn senior-home-btn"
           >
-            🏥 {formatHome(profile.senior_home)} Information
+            {formatHome(profile.senior_home)} Information
           </button>
         )}
         <button onClick={() => router.push('/conversationIdeas')} className="main-btn">
-          💭 Conversation Ideas
+          Conversation Ideas
         </button>
         <button onClick={() => router.push('/timesheet')} className="main-btn">
-          🕑 Timesheet
+          Timesheet
         </button>
         <button onClick={() => router.push('/genericComments')} className="main-btn">
-          💬 General Comments
+          General Comments
         </button>
         <button onClick={() => router.push('/seniorComments')} className="main-btn">
-          📝 Senior Comments
+          Senior Comments
         </button>
         <button onClick={() => router.push('/addSenior')} className="main-btn">
-          👴 Add Senior
+          Add Senior
         </button>
       </section>
 
