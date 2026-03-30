@@ -3,6 +3,7 @@ import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/router'
 import { invokeFunction } from '../lib/supabaseFunctions'
 import LoadingOverlay from '../components/LoadingOverlay'
+import ErrorDisplay from '../components/ErrorDisplay'
 
 export default function ViewMatch() {
   const user = useUser()
@@ -49,7 +50,16 @@ export default function ViewMatch() {
   }, [user, supabase, router])
 
   if (loading) return<LoadingOverlay message="Loading your matches… ⏳" />
-  if (error) return <p style={{ color: 'crimson' }}>Error: {error}</p>
+  
+  if (error) {
+    return (
+      <div style={{ padding: '2rem', maxWidth: '600px', margin: '0 auto' }}>
+        <h1 style={{ color: '#8d171b', marginBottom: '1.5rem', textAlign: 'center' }}>My Matches</h1>
+        <ErrorDisplay message={error} onDismiss={() => setError(null)} />
+      </div>
+    )
+  }
+  
   if (!matchData) return null
 
   const { permanent, temporary } = matchData

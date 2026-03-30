@@ -2,15 +2,19 @@ import { useEffect, useState } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import useProfile from "../../hooks/useProfile";
 import LoadingOverlay from "../../components/LoadingOverlay";
+import { useRouter } from "next/router";
+import ErrorDisplay from "../../components/ErrorDisplay";
 
 export default function CoordinatorDashboard() {
     const supabase = useSupabaseClient();
     const user = useUser();
     const { profile, loading: profileLoading } = useProfile();
+    const router = useRouter();
 
     const [volunteers, setVolunteers] = useState([]);
     const [reservations, setReservations] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
     const [startDate, setStartDate] = useState(
         new Date().toISOString().split("T")[0]
     );
@@ -30,9 +34,9 @@ export default function CoordinatorDashboard() {
     // Check coordinator access
     useEffect(() => {
         if (!profileLoading && profile?.role !== "coordinator") {
-            window.location.href = "/profile";
+            router.replace("/profile");
         }
-    }, [profile, profileLoading]);
+    }, [profile, profileLoading, router]);
 
     // Load volunteers for this home
     useEffect(() => {
@@ -145,10 +149,15 @@ export default function CoordinatorDashboard() {
                 <h1 style={{ fontSize: "2rem", marginBottom: "0.5rem", margin: 0 }}>
                     🏥 Coordinator Dashboard
                 </h1>
-                <p style={{ opacity: 0.9, margin: "0.5rem 0 0 0", fontSize: "1.1rem" }}>
-                    {formatHome(profile.senior_home)}
+                <p style={{ margin: 0, opacity: 0.9 }}>
+                    Overview for {formatHome(profile.senior_home)}
                 </p>
             </div>
+
+            <ErrorDisplay 
+                message={error} 
+                onDismiss={() => setError(null)} 
+            />
 
             {/* Volunteers Section */}
             <section style={{ marginBottom: "2.5rem" }}>
@@ -343,7 +352,7 @@ export default function CoordinatorDashboard() {
             <div style={{ textAlign: "center", marginTop: "2rem" }}>
                 <button
                     type="button"
-                    onClick={() => window.location.href = "/profile"}
+                    onClick={() => router.push("/profile")}
                     style={{
                         backgroundColor: "#ffffff",
                         color: "#8d171b",

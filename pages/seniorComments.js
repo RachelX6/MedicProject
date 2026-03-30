@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import LoadingOverlay from "../components/LoadingOverlay";
 import seniorHomesData from '../data/seniorHomes.json';
+import { useRouter } from "next/router";
+import ErrorDisplay from "../components/ErrorDisplay";
 
 export default function SeniorComments() {
     const supabase = useSupabaseClient();
@@ -15,6 +17,8 @@ export default function SeniorComments() {
     const [comments, setComments] = useState([]);
     const [newComment, setNewComment] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
+    const router = useRouter();
 
     // Load all seniors
     useEffect(() => {
@@ -86,6 +90,7 @@ export default function SeniorComments() {
         if (!newComment.trim() || !selectedSenior || !user) return;
 
         setSubmitting(true);
+        setSubmitError(null);
 
         const selectedSeniorObj = filteredSeniors.find(s => s.senior_id === selectedSenior);
 
@@ -97,7 +102,7 @@ export default function SeniorComments() {
         });
 
         if (error) {
-            alert("Error posting comment: " + error.message);
+            setSubmitError("Error posting comment: " + error.message);
         } else {
             setNewComment("");
             // Reload comments
@@ -148,6 +153,11 @@ export default function SeniorComments() {
             }}>
                 Senior Feedback
             </h1>
+
+            <ErrorDisplay 
+                message={submitError} 
+                onDismiss={() => setSubmitError(null)} 
+            />
 
             {/* Step 1: Select Senior Home */}
             <div style={{ marginBottom: "2rem" }}>
@@ -337,7 +347,7 @@ export default function SeniorComments() {
             <div style={{ textAlign: "center", marginTop: "2rem" }}>
                 <button
                     type="button"
-                    onClick={() => window.location.href = "/profile"}
+                    onClick={() => router.push("/profile")}
                     style={{
                         backgroundColor: "#8d171b",
                         color: "#fff",

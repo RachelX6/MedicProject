@@ -3,6 +3,8 @@ import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/router'
 import LoadingOverlay from '../components/LoadingOverlay'
 import { invokeFunction } from '../lib/supabaseFunctions'
+import seniorHomesData from '../data/seniorHomes.json'
+import ErrorDisplay from '../components/ErrorDisplay'
 
 export default function Register() {
   const supabase = useSupabaseClient()
@@ -19,6 +21,7 @@ export default function Register() {
   })
 
   const [loading, setLoading] = useState(false)
+  const [submitError, setSubmitError] = useState(null)
 
   useEffect(() => {
     if (user) {
@@ -43,12 +46,13 @@ export default function Register() {
     // Validate required fields
     for (const [key, value] of Object.entries(form)) {
       if (!value) {
-        alert(`Please fill out ${key.replace('_', ' ')}`)
+        setSubmitError(`Please fill out ${key.replace('_', ' ')}`)
         return
       }
     }
 
     try {
+      setSubmitError(null)
       setLoading(true)
 
       // ✅ Call your Edge Function instead of direct insert
@@ -68,12 +72,12 @@ export default function Register() {
 
         if (data?.error) {
           console.error('Edge Function returned error:', data)
-          alert(data.error || 'Error saving profile.')
+          setSubmitError(data.error || 'Error saving profile.')
           return
         }
       } catch (err) {
         console.error('Edge Function error:', err)
-        alert('Error saving profile: ' + (err.message || String(err)))
+        setSubmitError('Error saving profile: ' + (err.message || String(err)))
         return
       }
 
@@ -81,7 +85,7 @@ export default function Register() {
       router.push('/profile')
     } catch (err) {
       console.error('Unexpected error:', err)
-      alert('Unexpected error—check console')
+      setSubmitError('Unexpected error—check console')
     } finally {
       setLoading(false)
     }
@@ -93,6 +97,12 @@ export default function Register() {
   return (
     <div className="form-container">
       <h1>One more step…</h1>
+
+      <ErrorDisplay 
+        message={submitError} 
+        onDismiss={() => setSubmitError(null)} 
+      />
+
       <form onSubmit={complete}>
         {/* First Name */}
         <div className="form-group">
@@ -157,7 +167,6 @@ export default function Register() {
           />
         </div>
 
-        {/* Senior Home */}
         <div className="form-group">
           <label htmlFor="senior_home">Senior Home</label>
           <select
@@ -167,10 +176,11 @@ export default function Register() {
             onChange={handleChange}
           >
             <option value="">Select a senior home</option>
-            <option value="casa_mia">Casa Mia — 1920 SW Marine Dr, Vancouver, BC</option>
-            <option value="pinegrove">Pinegrove Place — 11331 Mellis Dr, Richmond, BC</option>
-            <option value="point_grey">Point Grey Private Hospital — 2423 Cornwall Ave, Vancouver, BC</option>
-            <option value="seasons">Seasons — 3338 Wesbrook Mall, Vancouver, BC</option>
+            {Object.values(seniorHomesData).map((home) => (
+              <option key={home.slug} value={home.slug}>
+                {home.name} — {home.address}
+              </option>
+            ))}
           </select>
         </div>
 

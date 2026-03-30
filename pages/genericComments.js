@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import LoadingOverlay from "../components/LoadingOverlay";
 import useProfile from "../hooks/useProfile";
+import { useRouter } from "next/router";
+import ErrorDisplay from "../components/ErrorDisplay";
 
 export default function GenericComments() {
     const supabase = useSupabaseClient();
     const user = useUser();
     const { profile } = useProfile();
+    const router = useRouter();
 
     const [loading, setLoading] = useState(true);
     const [comments, setComments] = useState([]);
@@ -14,6 +17,7 @@ export default function GenericComments() {
     const [category, setCategory] = useState("general");
     const [submitting, setSubmitting] = useState(false);
     const [filterCategory, setFilterCategory] = useState("all");
+    const [submitError, setSubmitError] = useState(null);
 
     const categories = [
         { value: "general", label: "💬 General" },
@@ -45,6 +49,7 @@ export default function GenericComments() {
         if (!newComment.trim() || !user) return;
 
         setSubmitting(true);
+        setSubmitError(null);
         const { error } = await supabase.from("generic_comments").insert({
             volunteer_id: user.id,
             senior_home: profile?.senior_home || null,
@@ -53,7 +58,7 @@ export default function GenericComments() {
         });
 
         if (error) {
-            alert("Error posting comment: " + error.message);
+            setSubmitError("Error posting comment: " + error.message);
         } else {
             setNewComment("");
             // Reload comments
@@ -93,6 +98,11 @@ export default function GenericComments() {
             <p style={{ color: "#666", marginBottom: "2rem", lineHeight: "1.5" }}>
                 Share your thoughts, suggestions, or concerns. Comments are visible to all volunteers across all homes.
             </p>
+
+            <ErrorDisplay 
+                message={submitError} 
+                onDismiss={() => setSubmitError(null)} 
+            />
 
             {/* Write Comment Form */}
             <form onSubmit={handleSubmit} style={{
@@ -259,7 +269,7 @@ export default function GenericComments() {
             <div style={{ textAlign: "center", marginTop: "2rem" }}>
                 <button
                     type="button"
-                    onClick={() => window.location.href = "/profile"}
+                    onClick={() => router.push("/profile")}
                     style={{
                         backgroundColor: "#8d171b",
                         color: "#fff",

@@ -2,6 +2,8 @@
 import { useUser, useSupabaseClient } from '@supabase/auth-helpers-react'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/router'
+import { invokeFunction } from '../lib/supabaseFunctions'
+import ErrorDisplay from '../components/ErrorDisplay'
 
 export default function ConversationIdeas() {
   const user = useUser()
@@ -10,28 +12,22 @@ export default function ConversationIdeas() {
 
   const [ideas, setIdeas] = useState([])
   const [loadingIdeas, setLoadingIdeas] = useState(false)
+  const [error, setError] = useState(null)
 
   // ✅ Fetch ideas from Gemini Edge Function
   const fetchIdeas = async () => {
     setLoadingIdeas(true)
+    setError(null)
     try {
-      const { data: { session } } = await supabase.auth.getSession()
-      const token = session?.access_token
-      const res = await fetch(`${supabase.supabaseUrl}/functions/v1/find_common_activities`, {
-        method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      const { data } = await invokeFunction(supabase, 'find_common_activities', { method: 'GET', requireAuth: true })
+      
+      if (!data) throw new Error("No data returned")
 
-      if (!res.ok) {
-        console.error('Edge function error:', await res.json())
-        return
-      }
-
-      const json = await res.json()
-      setIdeas(json || [])
-      localStorage.setItem("conversationIdeas", JSON.stringify(json))
+      setIdeas(data || [])
+      localStorage.setItem("conversationIdeas", JSON.stringify(data))
     } catch (err) {
       console.error('Error fetching ideas:', err)
+      setError("Failed to fetch ideas: " + (err.message || String(err)))
     } finally {
       setLoadingIdeas(false)
     }
@@ -90,7 +86,9 @@ export default function ConversationIdeas() {
         Conversation Activity Ideas
       </h1>
 
-      {ideas.length === 0 ? (
+      <ErrorDisplay message={error} onDismiss={() => setError(null)} />
+
+      {ideas.length === 0 && !loadingIdeas ? (
         <p>No conversation ideas returned yet.</p>
       ) : (
         ideas.map((idea, index) => (

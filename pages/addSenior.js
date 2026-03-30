@@ -2,14 +2,18 @@ import { useState } from "react";
 import { useSupabaseClient, useUser } from "@supabase/auth-helpers-react";
 import LoadingOverlay from "../components/LoadingOverlay";
 import useProfile from "../hooks/useProfile";
+import { useRouter } from "next/router";
+import ErrorDisplay from "../components/ErrorDisplay";
 
 export default function AddSenior() {
     const supabase = useSupabaseClient();
     const user = useUser();
     const { profile, loading: profileLoading } = useProfile();
+    const router = useRouter();
 
     const [publicSeniorId, setPublicSeniorId] = useState("");
     const [submitting, setSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState(null);
 
     const formatHome = (home) => {
         if (!home) return "—";
@@ -32,9 +36,9 @@ export default function AddSenior() {
 
         if (error) {
             if (error.code === "23505") {
-                alert("A senior with this ID already exists.");
+                setSubmitError("A senior with this ID already exists.");
             } else {
-                alert("Error adding senior: " + error.message);
+                setSubmitError("Error adding senior: " + error.message);
             }
         } else {
             alert("Senior added successfully!");
@@ -64,7 +68,7 @@ export default function AddSenior() {
                     You need to select a senior home in your profile before you can add seniors.
                 </p>
                 <button
-                    onClick={() => window.location.href = "/editProfile"}
+                    onClick={() => router.push("/editProfile")}
                     style={{
                         marginTop: "1rem",
                         backgroundColor: "#8d171b",
@@ -98,6 +102,12 @@ export default function AddSenior() {
             }}>
                 Add Senior
             </h1>
+
+            <ErrorDisplay 
+                message={submitError} 
+                onDismiss={() => setSubmitError(null)} 
+            />
+
             <p style={{ color: "#666", marginBottom: "2rem", lineHeight: "1.5" }}>
                 Add a senior to <strong style={{ color: "#171717" }}>{formatHome(profile.senior_home)}</strong>.
                 The senior will be automatically assigned to your home.
@@ -185,7 +195,7 @@ export default function AddSenior() {
             <div style={{ textAlign: "center", marginTop: "2rem" }}>
                 <button
                     type="button"
-                    onClick={() => window.location.href = "/profile"}
+                    onClick={() => router.push("/profile")}
                     style={{
                         backgroundColor: "#ffffff",
                         color: "#8d171b",

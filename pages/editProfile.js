@@ -2,13 +2,9 @@ import { useState, useEffect } from 'react'
 import { useSupabaseClient, useUser } from '@supabase/auth-helpers-react'
 import { useRouter } from 'next/router'
 import useProfile from '../hooks/useProfile'
-
-const SENIOR_HOME_OPTIONS = [
-  { value: 'casa_mia', label: 'Casa Mia' },
-  { value: 'pinegrove', label: 'Pinegrove Place' },
-  { value: 'point_grey', label: 'Point Grey Hospital' },
-  { value: 'seasons', label: 'Seasons'}
-]
+import seniorHomesData from '../data/seniorHomes.json'
+import { invokeFunction } from '../lib/supabaseFunctions'
+import ErrorDisplay from '../components/ErrorDisplay'
 
 export default function EditProfile() {
   const supabase = useSupabaseClient()
@@ -84,11 +80,9 @@ export default function EditProfile() {
         payload[key] = form[key].trim()
       })
 
-      const { data, error } = await supabase.functions.invoke('update_user_profile', {
+      const { data, error } = await invokeFunction(supabase, 'update_user_profile', {
         body: { profileData: payload },
-        headers: {
-          'apikey': process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-        }
+        requireAuth: true
       })
 
       if (error) throw error
@@ -97,7 +91,7 @@ export default function EditProfile() {
       router.push('/profile')
     } catch (error) {
       console.error('Update failed:', error)
-      setValidationError('Failed to update. Please check your connection.')
+      setValidationError('Failed to update: ' + (error.message || String(error)))
     } finally {
       setIsSubmitting(false)
     }
@@ -124,23 +118,18 @@ export default function EditProfile() {
       <h1 style={{ color: '#8d171b', marginBottom: '2rem', textAlign: 'center' }}>
         Edit Profile
       </h1>
+      <div style={{ padding: '2rem 2.5rem' }}>
+        <h1 style={{ margin: '0 0 0.5rem 0', color: '#8d171b', fontSize: '1.8rem' }}>Edit Profile</h1>
+        <p style={{ margin: '0 0 1.5rem 0', color: '#666', fontSize: '0.95rem' }}>
+          Update your personal details and assignments below.
+        </p>
 
-      {validationError && (
-        <div style={{
-          backgroundColor: '#fee2e2',
-          color: '#b91c1c',
-          padding: '1rem',
-          borderRadius: '8px',
-          marginBottom: '1.5rem',
-          border: '1px solid #f87171',
-          textAlign: 'center',
-          fontWeight: 'bold'
-        }}>
-          {validationError}
-        </div>
-      )}
+        <ErrorDisplay 
+          message={validationError} 
+          onDismiss={() => setValidationError('')} 
+        />
 
-      <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
         {['first_name', 'preferred_name', 'last_name', 'email', 'phone_number'].map((name) => (
           <div key={name} style={{ marginBottom: '1.5rem', color: 'black' }}>
             <RequiredLabel
@@ -181,8 +170,10 @@ export default function EditProfile() {
             }}
           >
             <option value="">Select a senior home</option>
-            {SENIOR_HOME_OPTIONS.map(home => (
-              <option key={home.value} value={home.value}>{home.label}</option>
+            {Object.values(seniorHomesData).map((home) => (
+              <option key={home.slug} value={home.slug}>
+                {home.name} — {home.address}
+              </option>
             ))}
           </select>
         </div>
@@ -222,6 +213,7 @@ export default function EditProfile() {
           </button>
         </div>
       </form>
+      </div>
     </div>
   )
 }

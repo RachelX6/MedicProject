@@ -3,17 +3,22 @@ import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 import { invokeFunction } from '../lib/supabaseFunctions'
 import LoadingOverlay from '../components/LoadingOverlay';
 import useProfile from '../hooks/useProfile';
+import { useRouter } from 'next/router';
+import ErrorDisplay from '../components/ErrorDisplay';
 
 export default function Timesheet() {
     const supabase = useSupabaseClient();
     const user = useUser();
     const { profile } = useProfile();
+    const router = useRouter();
 
     const [reservations, setReservations] = useState([]);
     const [totalHours, setTotalHours] = useState(null);
     const [descriptions, setDescriptions] = useState({});
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [submitError, setSubmitError] = useState(null);
+    const [refreshTrigger, setRefreshTrigger] = useState(0);
 
     // Manual entry state
     const [showManualForm, setShowManualForm] = useState(false);
@@ -76,7 +81,7 @@ export default function Timesheet() {
         };
 
         load();
-    }, [user, supabase]);
+    }, [user, supabase, refreshTrigger]);
 
     // Load seniors for manual entry dropdown
     useEffect(() => {
@@ -94,12 +99,8 @@ export default function Timesheet() {
         loadSeniors();
     }, [user, profile, supabase]);
 
-    // Loading screen
     if (!user || loading)
         return <LoadingOverlay message="Loading your timesheet data..." />;
-
-    if (error)
-        return <p style={{ color: "crimson" }}>Error: {error}</p>;
 
     // Handlers
     const handleDescriptionChange = (id, value) => {
@@ -108,26 +109,30 @@ export default function Timesheet() {
 
     const handleSubmit = async (id) => {
         try {
+            setSubmitError(null);
             const { data } = await invokeFunction(supabase, 'update_reservations', { body: { action: 'complete', reservation_id: id, description: descriptions[id] || '' } })
             const error = data?.error
 
             if (error) throw error;
             alert("Session marked as complete!");
+            setRefreshTrigger(v => v + 1);
         } catch (err) {
             console.error("Submit error:", err);
-            alert("Error submitting timesheet.");
+            setSubmitError("Error submitting timesheet: " + (err.message || String(err)));
         }
     };
 
     const handleCancel = async (id) => {
         try {
+            setSubmitError(null);
             const { data } = await invokeFunction(supabase, 'update_reservations', { body: { action: 'cancel', reservation_id: id } })
             const error = data?.error
             if (error) throw error
             alert('Session canceled.')
+            setRefreshTrigger(v => v + 1);
         } catch (err) {
             console.error('Cancel error:', err)
-            alert('Error canceling session.')
+            setSubmitError('Error canceling session: ' + (err.message || String(err)));
         }
     };
 
@@ -154,12 +159,13 @@ export default function Timesheet() {
             setManualComment("");
             setManualSenior("");
             setShowManualForm(false);
+            setSubmitError(null);
 
-            // Reload the page to refresh data
-            window.location.reload();
+            // Fetch rather than reload
+            setRefreshTrigger(v => v + 1);
         } catch (err) {
             console.error("Manual submit error:", err);
-            alert("Error adding timesheet entry: " + (err.message || String(err)));
+            setSubmitError("Error adding timesheet entry: " + (err.message || String(err)));
         } finally {
             setSubmittingManual(false);
         }
@@ -179,6 +185,14 @@ export default function Timesheet() {
                 fontSize: "2rem",
                 marginBottom: "1.5rem"
             }}>Timesheet</h1>
+
+            <ErrorDisplay 
+                message={error || submitError} 
+                onDismiss={() => {
+                    setError(null);
+                    setSubmitError(null);
+                }} 
+            />
 
             {totalHours !== null && (
                 <div style={{
@@ -495,7 +509,7 @@ export default function Timesheet() {
             <div style={{ textAlign: "center", marginTop: "2rem" }}>
                 <button
                     type="button"
-                    onClick={() => window.location.href = "/profile"}
+                    onClick={() => router.push("/profile")}
                     style={{
                         backgroundColor: "#ffffff",
                         color: "#8d171b",
