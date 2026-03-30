@@ -18,20 +18,25 @@
             {
                 "title": "Volunteer Handbook",
                 "description": "Essential guidelines and best practices for volunteers",
-                "url": "#volunteer-handbook"
+                "url": "/pdfs/casa_mia/casa_mia_volunteer_handbook.pdf"
             },
             {
-                "title": "Activity Ideas Guide",
-                "description": "Suggestions for engaging activities with residents",
-                "url": "#activity-guide"
+                "title": "Confidentiality Agreement`",
+                "description": "Important information about maintaining resident privacy and confidentiality",
+                "url": "/pdfs/casa_mia/casa_mia_confidentiality.pdf"
             },
             {
-                "title": "Contact Information",
-                "description": "Key contacts and emergency numbers",
-                "url": "#contacts"
+                "title": "Tuberculosis (TB) Screening Form",
+                "description": "Required form for TB screening, which must be completed before volunteering",
+                "url": "/pdfs/casa_mia/casa_mia_tb_screening.pdf"
+            }, 
+            {
+                "title": "Volunteer Waiver Form",
+                "description": "Legal document outlining the responsibilities and risks of volunteering",
+                "url": "/pdfs/casa_mia/casa_mia_volunteer_waiver.pdf"
             }
         ],
-        "screeningLink": "https://screening-link-placeholder.com/casa-mia",
+        "screeningLink": "https://justice.gov.bc.ca/screening/crrpa/org-access",
         "screeningInstructions": "All volunteers must complete a criminal background check before their first visit. Please allow 5-7 business days for processing. Click the button below to begin the screening process."
     },
     "pinegrove": {
@@ -51,22 +56,12 @@
         ],
         "resources": [
             {
-                "title": "Volunteer Handbook",
-                "description": "Essential guidelines and best practices for volunteers",
-                "url": "#volunteer-handbook"
-            },
-            {
-                "title": "Activity Ideas Guide",
-                "description": "Suggestions for engaging activities with residents",
-                "url": "#activity-guide"
-            },
-            {
-                "title": "Contact Information",
-                "description": "Key contacts and emergency numbers",
-                "url": "#contacts"
+                "title": "Volunteer Waiver Form",
+                "description": "Legal document outlining the responsibilities and risks of volunteering",
+                "url": "/pdfs/pinegrove/pinegrove_volunteer_waiver.pdf"
             }
         ],
-        "screeningLink": "https://screening-link-placeholder.com/pinegrove",
+        "screeningLink": "https://justice.gov.bc.ca/screening/crrpa/org-access",
         "screeningInstructions": "All volunteers must complete a criminal background check before their first visit. Please allow 5-7 business days for processing. Click the button below to begin the screening process."
     },
     "point_grey": {
@@ -86,22 +81,27 @@
         ],
         "resources": [
             {
-                "title": "Volunteer Handbook",
-                "description": "Essential guidelines and best practices for volunteers",
-                "url": "#volunteer-handbook"
+                "title": "Volunteer Application Form",
+                "description": "Required form to apply for volunteer positions at Point Grey Private Hospital",
+                "url": "/pdfs/point_grey/point_grey_volunteer_application.pdf"
             },
             {
-                "title": "Activity Ideas Guide",
-                "description": "Suggestions for engaging activities with residents",
-                "url": "#activity-guide"
+                "title": "Confidentiality Agreement`",
+                "description": "Important information about maintaining resident privacy and confidentiality",
+                "url": "/pdfs/point_grey/point_grey_volunteer_confidentiality.pdf"
             },
             {
-                "title": "Contact Information",
-                "description": "Key contacts and emergency numbers",
-                "url": "#contacts"
+                "title": "Tuberculosis (TB) Screening Form",
+                "description": "Required form for TB screening, which must be completed before volunteering",
+                "url": "/pdfs/point_grey/point_grey_tb_screening.pdf"
+            }, 
+            {
+                "title": "Volunteer Waiver Form",
+                "description": "Legal document outlining the responsibilities and risks of volunteering",
+                "url": "/pdfs/point_grey/point_grey_volunteer_waiver.pdf"
             }
         ],
-        "screeningLink": "https://screening-link-placeholder.com/point-grey",
+        "screeningLink": "https://justice.gov.bc.ca/screening/crrpa/org-access",
         "screeningInstructions": "All volunteers must complete a criminal background check before their first visit. Please allow 5-7 business days for processing. Click the button below to begin the screening process."
     },
     "seasons": {
@@ -121,22 +121,12 @@
         ],
         "resources": [
             {
-                "title": "Volunteer Handbook",
-                "description": "Essential guidelines and best practices for volunteers",
-                "url": "#volunteer-handbook"
-            },
-            {
-                "title": "Activity Ideas Guide",
-                "description": "Suggestions for engaging activities with residents",
-                "url": "#activity-guide"
-            },
-            {
-                "title": "Contact Information",
-                "description": "Key contacts and emergency numbers",
-                "url": "#contacts"
+                "title": "Volunteer Waiver Form",
+                "description": "Legal document outlining the responsibilities and risks of volunteering",
+                "url": "/pdfs/seasons/seasons_volunteer_waiver.pdf"
             }
         ],
-        "screeningLink": "https://screening-link-placeholder.com/seasons",
+        "screeningLink": "https://justice.gov.bc.ca/screening/crrpa/org-access",
         "screeningInstructions": "All volunteers must complete a criminal background check before their first visit. Please allow 5-7 business days for processing. Click the button below to begin the screening process."
     }
 }

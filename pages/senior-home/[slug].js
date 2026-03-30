@@ -173,6 +173,8 @@ export default function SeniorHomePage() {
                         <a
                             key={index}
                             href={resource.url}
+                            target="_blank"             
+                            rel="noopener noreferrer" 
                             style={{
                                 display: 'block',
                                 padding: '1.5rem',
